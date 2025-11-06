@@ -20,7 +20,9 @@ const UserLayout = () => {
 
   const menuItems = [
     { icon: Home, label: 'Beranda', path: '/user' },
+    { icon: QrCode, label: 'Perangkat', path: '/user/device-group' },
     { icon: QrCode, label: 'Peminjaman', path: '/user/borrow' },
+    //{ icon: QrCode, label: 'Pinjam Group', path: '/user/borrow-group' },
     { icon: RotateCcw, label: 'Pengembalian', path: '/user/return' },
     { icon: FileText, label: 'Laporan', path: '/user/reports' },
   ];

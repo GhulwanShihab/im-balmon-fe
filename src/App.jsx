@@ -33,6 +33,8 @@ import ViewEmployee from './pages/admin/employees/ViewEmployee';
 // User Pages
 import UserDashboard from './pages/user/Dashboard';
 import BorrowPage from './pages/user/Borrow';
+import DeviceGroupsPage from './pages/user/DeviceGroup';
+import BorrowGroupPage from './pages/user/BorrowGroup';
 import ReturnPage from './pages/user/Return';
 import ReportsPage from './pages/user/Reports';
 
@@ -251,6 +253,8 @@ function App() {
           }>
             <Route index element={<UserDashboard />} />
             <Route path="borrow" element={<BorrowPage />} />
+            <Route path="device-group" element={<DeviceGroupsPage />} />
+            <Route path="borrow-group" element={<BorrowGroupPage />} />2
             <Route path="return" element={<ReturnPage />} />
             <Route path="reports" element={<ReportsPage />} />
           </Route>

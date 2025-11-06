@@ -7,7 +7,8 @@ import {
   Smartphone,
   ChevronLeft,
   ChevronRight,
-  Eye
+  Eye,
+  FileDown
 } from 'lucide-react';
 
 const UsageReports = () => {
@@ -168,7 +169,6 @@ const UsageReports = () => {
       const response = await fetch(url, {
         method: 'GET',
         headers: headers
-        // Hapus credentials: 'include' karena menyebabkan CORS error dengan wildcard origins
       });
 
       console.log('Response status:', response.status);
@@ -231,6 +231,112 @@ const UsageReports = () => {
     }
   };
 
+  /**
+   * ✨ FUNGSI BARU: Export PDF Berita Acara
+   * Fungsi ini akan memanggil endpoint backend untuk generate dan download PDF
+   */
+  const handleExportPDF = async (loanId, loanNumber) => {
+    try {
+      setExportingId(loanId);
+      console.log(`📄 Starting PDF export for loan ID: ${loanId}`);
+      
+      const headers = getAuthHeaders();
+      if (!headers) {
+        console.error('❌ No auth headers available');
+        return;
+      }
+
+      // Call endpoint export PDF
+      const response = await fetch(
+        `http://localhost:8000/api/v1/loans/${loanId}/export-pdf`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': headers.Authorization
+          }
+        }
+      );
+      
+      console.log('PDF Export response status:', response.status);
+
+      // Handle unauthorized
+      if (response.status === 401) {
+        alert('Sesi Anda telah berakhir. Silakan login kembali.');
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        window.location.href = '/login';
+        return;
+      }
+
+      // Handle not found
+      if (response.status === 404) {
+        alert('Data peminjaman tidak ditemukan.');
+        return;
+      }
+
+      // Handle forbidden
+      if (response.status === 403) {
+        alert('Anda tidak memiliki akses untuk export data ini.');
+        return;
+      }
+
+      // Handle success
+      if (response.ok) {
+        console.log('✅ PDF export successful, downloading file...');
+        
+        // Get blob data
+        const blob = await response.blob();
+        console.log('Blob size:', blob.size, 'bytes');
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `Berita_Acara_${loanNumber}_${timestamp}.pdf`;
+        link.setAttribute('download', filename);
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        
+        console.log('✅ PDF downloaded successfully:', filename);
+        
+        // Show success message (optional - bisa pakai toast library)
+        alert(`Berita Acara berhasil diunduh: ${filename}`);
+        
+      } else {
+        // Handle other errors
+        const errorText = await response.text();
+        console.error('❌ Export error:', errorText);
+        
+        // Try to parse error message
+        try {
+          const errorJson = JSON.parse(errorText);
+          alert(`Gagal export PDF: ${errorJson.detail || 'Unknown error'}`);
+        } catch {
+          alert('Gagal export PDF. Silakan coba lagi atau hubungi administrator.');
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Error exporting PDF:', error);
+      alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
+    } finally {
+      setExportingId(null);
+    }
+  };
+
+  /**
+   * Legacy function - masih dipertahankan untuk backward compatibility
+   * Jika endpoint /export masih digunakan untuk format lain
+   */
   const handleExportSingle = async (loanId, loanNumber) => {
     try {
       setExportingId(loanId);
@@ -287,52 +393,6 @@ const UsageReports = () => {
       yellow: 'bg-yellow-50 text-yellow-600',
       purple: 'bg-purple-50 text-purple-600'
     };
-  
-  const handleApproveRequest = async (requestId) => {
-    try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-    
-      const response = await fetch(`http://localhost:8000/api/v1/devices/condition-change-requests/${requestId}/approve`, {
-        method: 'POST',
-        headers: headers
-      });
-    
-      if (response.ok) {
-        toast.success('Permintaan berhasil disetujui');
-        setConditionRequests(prev => prev.filter(r => r.id !== requestId));
-        fetchLoanData(); // refresh loan table agar kondisi device update
-      } else {
-        toast.error('Gagal menyetujui permintaan');
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error('Error saat approve');
-    }
-  };
-  
-  const handleRejectRequest = async (requestId) => {
-    try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-    
-      const response = await fetch(`http://localhost:8000/api/v1/devices/condition-change-requests/${requestId}/reject`, {
-        method: 'POST',
-        headers: headers
-      });
-    
-      if (response.ok) {
-        toast.success('Permintaan ditolak');
-        setConditionRequests(prev => prev.filter(r => r.id !== requestId));
-      } else {
-        toast.error('Gagal menolak permintaan');
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error('Error saat reject');
-    }
-  };
-
 
     return (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -350,6 +410,51 @@ const UsageReports = () => {
         </div>
       </div>
     );
+  };
+
+  const handleApproveRequest = async (requestId) => {
+    try {
+      const headers = getAuthHeaders();
+      if (!headers) return;
+    
+      const response = await fetch(`http://localhost:8000/api/v1/devices/condition-change-requests/${requestId}/approve`, {
+        method: 'POST',
+        headers: headers
+      });
+    
+      if (response.ok) {
+        alert('Permintaan berhasil disetujui');
+        setConditionRequests(prev => prev.filter(r => r.id !== requestId));
+        fetchLoanData(); // refresh loan table agar kondisi device update
+      } else {
+        alert('Gagal menyetujui permintaan');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error saat approve');
+    }
+  };
+  
+  const handleRejectRequest = async (requestId) => {
+    try {
+      const headers = getAuthHeaders();
+      if (!headers) return;
+    
+      const response = await fetch(`http://localhost:8000/api/v1/devices/condition-change-requests/${requestId}/reject`, {
+        method: 'POST',
+        headers: headers
+      });
+    
+      if (response.ok) {
+        alert('Permintaan ditolak');
+        setConditionRequests(prev => prev.filter(r => r.id !== requestId));
+      } else {
+        alert('Gagal menolak permintaan');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error saat reject');
+    }
   };
 
   const formatDate = (dateString) => {
@@ -402,7 +507,7 @@ const UsageReports = () => {
 
       {/* Debug Panel */}
       {showDebug && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <h3 className="font-bold text-yellow-900 mb-2">Debug Panel</h3>
           <div className="space-y-2 text-sm">
             <div>
@@ -418,6 +523,9 @@ const UsageReports = () => {
             </div>
             <div>
               <strong>API URL:</strong> <code className="text-xs">http://localhost:8000/api/v1/loans</code>
+            </div>
+            <div>
+              <strong>PDF Export Endpoint:</strong> <code className="text-xs">http://localhost:8000/api/v1/loans/:id/export-pdf</code>
             </div>
             <div>
               <strong>CORS Origins dari Backend:</strong> http://localhost:3000, http://127.0.0.1:3000
@@ -488,6 +596,7 @@ const UsageReports = () => {
                   <th className="px-4 py-2 text-left">Pengguna</th>
                   <th className="px-4 py-2 text-left">Status</th>
                   <th className="px-4 py-2 text-left">Tanggal Pengajuan</th>
+                  <th className="px-4 py-2 text-left">Aksi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -606,16 +715,17 @@ const UsageReports = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+                          {/* ✨ TOMBOL EXPORT PDF BARU */}
                           <button
-                            onClick={() => handleExportSingle(loan.id, loan.loan_number)}
+                            onClick={() => handleExportPDF(loan.id, loan.loan_number)}
                             disabled={exportingId === loan.id}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Export PDF"
+                            title="Export Berita Acara (PDF)"
                           >
                             {exportingId === loan.id ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
                             ) : (
-                              <Download className="w-4 h-4" />
+                              <FileDown className="w-4 h-4" />
                             )}
                           </button>
                         </div>
