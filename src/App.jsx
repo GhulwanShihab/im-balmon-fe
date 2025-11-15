@@ -2,10 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { TokenManager, setupAutoRefresh } from './services/api'; // 🔥 Import new utilities
 
 // Layouts
 import AdminLayout from './layouts/AdminLayout';
 import UserLayout from './layouts/UserLayout';
+import ManagerLayout from './layouts/ManagerLayout';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -30,6 +32,16 @@ import AddEmployee from './pages/admin/employees/AddEmployee';
 import EditEmployee from './pages/admin/employees/EditEmployee';
 import ViewEmployee from './pages/admin/employees/ViewEmployee';
 
+// Manager Pages
+import ManagerDashboard from './pages/manager/Dashboard';
+import ManagerDevices from './pages/manager/Devices';
+import ManagerUsageReports from './pages/manager/UsageReports';
+import ManagerConditionApprovals from './pages/manager/ConditionApprovals';
+import ManagerStatistics from './pages/manager/Statistics';
+import ManagerUsers from './pages/manager/Users';
+import ManagerUserApprovals from './pages/manager/UserApprovals';
+import ManagerEmployees from './pages/manager/Employees';
+
 // User Pages
 import UserDashboard from './pages/user/Dashboard';
 import BorrowPage from './pages/user/Borrow';
@@ -51,19 +63,28 @@ import AdminInfo from './pages/AdminInfo';
 // Configure axios defaults
 axios.defaults.baseURL = 'http://localhost:8000';
 
-// Helper function to get token from storage
-const getToken = () => {
-  return localStorage.getItem('token') || sessionStorage.getItem('token');
-};
-
-// Protected Route Component
+// Protected Route Component with auto-refresh
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = React.useState(null);
-  const token = getToken();
+  const token = TokenManager.getAccessToken(); // 🔥 Use TokenManager
+
+  React.useEffect(() => {
+    // 🔥 Setup auto-refresh when component mounts
+    if (token) {
+      setupAutoRefresh();
+    }
+
+    // Cleanup interval on unmount
+    return () => {
+      if (window.tokenRefreshInterval) {
+        clearInterval(window.tokenRefreshInterval);
+      }
+    };
+  }, [token]);
 
   React.useEffect(() => {
     const verifyToken = async () => {
-      if (!token) {
+      if (!token || TokenManager.isTokenExpired()) {
         setIsAuthenticated(false);
         return;
       }
@@ -83,11 +104,7 @@ const ProtectedRoute = ({ children }) => {
         }
       } catch (error) {
         // Token invalid, clear storage
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('rememberMe');
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('refresh_token');
+        TokenManager.clearTokens();
         setIsAuthenticated(false);
       }
     };
@@ -110,15 +127,29 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Admin Route Component
+// Admin Route Component with auto-refresh
 const AdminRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = React.useState(null);
   const [isAdmin, setIsAdmin] = React.useState(null);
-  const token = getToken();
+  const token = TokenManager.getAccessToken(); // 🔥 Use TokenManager
+
+  React.useEffect(() => {
+    // 🔥 Setup auto-refresh when component mounts
+    if (token) {
+      setupAutoRefresh();
+    }
+
+    // Cleanup interval on unmount
+    return () => {
+      if (window.tokenRefreshInterval) {
+        clearInterval(window.tokenRefreshInterval);
+      }
+    };
+  }, [token]);
 
   React.useEffect(() => {
     const verifyAdminToken = async () => {
-      if (!token) {
+      if (!token || TokenManager.isTokenExpired()) {
         setIsAuthenticated(false);
         return;
       }
@@ -156,11 +187,7 @@ const AdminRoute = ({ children }) => {
         }
       } catch (error) {
         // Token invalid, clear storage
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('rememberMe');
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('refresh_token');
+        TokenManager.clearTokens();
         setIsAuthenticated(false);
       }
     };
@@ -254,7 +281,7 @@ function App() {
             <Route index element={<UserDashboard />} />
             <Route path="borrow" element={<BorrowPage />} />
             <Route path="device-group" element={<DeviceGroupsPage />} />
-            <Route path="borrow-group" element={<BorrowGroupPage />} />2
+            <Route path="borrow-group" element={<BorrowGroupPage />} />
             <Route path="return" element={<ReturnPage />} />
             <Route path="reports" element={<ReportsPage />} />
           </Route>

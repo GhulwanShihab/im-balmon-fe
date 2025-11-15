@@ -5,20 +5,49 @@ import {
   FileText, 
   AlertTriangle,
   TrendingUp,
-  Activity,
   Calendar,
-  Clock
+  CheckCircle,
+  XCircle,
+  Settings,
+  UserCheck,
+  UserX,
+  BarChart3,
+  PieChart
 } from 'lucide-react';
 import apiClient from '../../services/api';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
-    devices: { total: 0, available: 0, in_use: 0, maintenance: 0 },
-    users: { total: 0, active: 0 },
-    loans: { active: 0, overdue: 0, total_today: 0, total_this_month: 0 }
+    devices: { 
+      total: 0, 
+      available: 0, 
+      in_use: 0, 
+      maintenance: 0,
+      good_condition: 0,
+      light_damage: 0,
+      heavy_damage: 0
+    },
+    users: { 
+      total: 0, 
+      active: 0, 
+      pending: 0,
+      verified: 0
+    },
+    loans: { 
+      active: 0, 
+      overdue: 0, 
+      total_today: 0, 
+      total_this_month: 0,
+      total_this_week: 0,
+      returned: 0,
+      cancelled: 0,
+      total_loans: 0,
+      most_borrowed_devices: [],
+      top_borrowers: []
+    }
   });
   const [loading, setLoading] = useState(true);
-  const [recentActivity, setRecentActivity] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -26,19 +55,88 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [deviceStats, userStats, loanStats] = await Promise.all([
-        apiClient.get('/devices/stats'),
-        apiClient.get('/users/stats'),
-        apiClient.get('/loans/stats')
+      setLoading(true);
+      setError(null);
+
+      // Fetch data using apiClient directly
+      const [deviceStatsRes, userStatsRes, loanStatsRes] = await Promise.all([
+        apiClient.get('/devices/stats').catch(err => {
+          console.error('Device stats error:', err);
+          return { data: null };
+        }),
+        apiClient.get('/users/stats').catch(err => {
+          console.error('User stats error:', err);
+          return { data: null };
+        }),
+        apiClient.get('/loans/stats').catch(err => {
+          console.error('Loan stats error:', err);
+          return { data: null };
+        })
       ]);
 
+      const deviceData = deviceStatsRes.data;
+      const userData = userStatsRes.data;
+      const loanData = loanStatsRes.data;
+
+      console.log('📊 Device Stats Response:', deviceData);
+      console.log('👥 User Stats Response:', userData);
+      console.log('📝 Loan Stats Response:', loanData);
+
+      // Parse device stats with flexible field mapping
+      const parsedDeviceStats = {
+        total: deviceData?.total || deviceData?.total_devices || 0,
+        available: deviceData?.available || deviceData?.available_devices || 0,
+        in_use: deviceData?.in_use || deviceData?.in_use_devices || 0,
+        maintenance: deviceData?.maintenance || deviceData?.maintenance_devices || 0,
+        good_condition: deviceData?.good_condition || deviceData?.baik || 0,
+        light_damage: deviceData?.light_damage || deviceData?.rusak_ringan || 0,
+        heavy_damage: deviceData?.heavy_damage || deviceData?.rusak_berat || 0
+      };
+      console.log('🔍 Device Data from API:', deviceData);  // ← TAMBAHKAN INI
+      console.log('🔍 Parsed good_condition:', parsedDeviceStats.good_condition);
+      
+      // Parse user stats with flexible field mapping
+      const parsedUserStats = {
+        total: userData?.total || userData?.total_users || 0,
+        active: userData?.active || userData?.active_users || 0,
+        pending: userData?.pending || userData?.pending_users || 0,
+        verified: userData?.verified || userData?.verified_users || 0
+      };
+
+      // Parse loan stats with flexible field mapping
+      const parsedLoanStats = {
+        active: loanData?.active_loans || loanData?.active || 0,
+        overdue: loanData?.overdue_loans || loanData?.overdue || 0,
+        total_today: loanData?.loans_today || loanData?.today || 0,
+        total_this_month: loanData?.loans_this_month || loanData?.this_month || 0,
+        total_this_week: loanData?.loans_this_week || loanData?.this_week || 0,
+        returned: loanData?.returned_loans || loanData?.returned || 0,
+        cancelled: loanData?.cancelled_loans || loanData?.cancelled || 0,
+        total_loans: loanData?.total_loans || loanData?.total || 0,
+        most_borrowed_devices: Array.isArray(loanData?.most_borrowed_devices) ? loanData.most_borrowed_devices : [],
+        top_borrowers: Array.isArray(loanData?.top_borrowers) ? loanData.top_borrowers : []
+      };
+
       setStats({
-        devices: deviceStats.data,
-        users: userStats.data,
-        loans: loanStats.data
+        devices: parsedDeviceStats,
+        users: parsedUserStats,
+        loans: parsedLoanStats
       });
+
+      console.log('✅ Final Parsed Stats:', {
+        devices: parsedDeviceStats,
+        users: parsedUserStats,
+        loans: parsedLoanStats
+      });
+
+      // Temporary debug alert
+      if (parsedDeviceStats.total === 0 && parsedUserStats.total === 0) {
+        alert('⚠️ Stats masih 0! Check console untuk melihat struktur data dari backend');
+      }
+
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('❌ Dashboard Error:', error);
+      setError('Gagal memuat data dashboard. Silakan refresh halaman.');
     } finally {
       setLoading(false);
     }
@@ -49,22 +147,56 @@ const Dashboard = () => {
       blue: 'bg-blue-50 text-blue-600 border-blue-200',
       green: 'bg-green-50 text-green-600 border-green-200',
       yellow: 'bg-yellow-50 text-yellow-600 border-yellow-200',
-      red: 'bg-red-50 text-red-600 border-red-200'
+      red: 'bg-red-50 text-red-600 border-red-200',
+      purple: 'bg-purple-50 text-purple-600 border-purple-200'
+    };
+
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-2">{value.toLocaleString()}</p>
+            {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+          </div>
+          <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+            <Icon className="w-7 h-7" />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const TopItemCard = ({ title, items, icon: Icon, color = "blue" }) => {
+    const colorClasses = {
+      blue: 'text-blue-600',
+      green: 'text-green-600'
     };
 
     return (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-            {subtitle && (
-              <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-            )}
-          </div>
-          <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-            <Icon className="w-6 h-6" />
-          </div>
+        <div className="flex items-center mb-4">
+          <Icon className={`w-5 h-5 ${colorClasses[color]} mr-2`} />
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        </div>
+        <div className="space-y-3">
+          {items && items.length > 0 ? (
+            items.map((item, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center flex-1">
+                  <span className="text-sm font-medium text-gray-500 mr-3">#{index + 1}</span>
+                  <span className="text-sm text-gray-900 font-medium truncate">
+                    {item.device_name || item.borrower_name || 'N/A'}
+                  </span>
+                </div>
+                <span className="text-sm font-bold text-gray-700 ml-2">
+                  {item.loan_count || 0} kali
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-4">Tidak ada data</p>
+          )}
         </div>
       </div>
     );
@@ -72,116 +204,119 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat data dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 font-medium">{error}</p>
+          <button 
+            onClick={fetchDashboardData}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Coba Lagi
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Selamat datang di panel administrasi IM-Balmon</p>
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard Admin</h1>
+        <p className="text-gray-600 mt-1">Panel administrasi IM-Balmon</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          icon={Smartphone}
-          title="Total Perangkat"
-          value={stats.devices.total}
-          subtitle={`${stats.devices.available} tersedia`}
-          color="blue"
-        />
-        <StatCard
-          icon={Users}
-          title="Total Pengguna"
-          value={stats.users.total}
-          subtitle={`${stats.users.active} aktif`}
-          color="green"
-        />
-        <StatCard
-          icon={FileText}
-          title="Peminjaman Aktif"
-          value={stats.loans.active}
-          subtitle="Sedang berlangsung"
-          color="yellow"
-        />
-        <StatCard
-          icon={AlertTriangle}
-          title="Terlambat"
-          value={stats.loans.overdue}
-          subtitle="Perlu tindak lanjut"
-          color="red"
-        />
-      </div>
-
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <StatCard
-          icon={TrendingUp}
-          title="Peminjaman Hari Ini"
-          value={stats.loans.total_today}
-          color="blue"
-        />
-        <StatCard
-          icon={Calendar}
-          title="Peminjaman Bulan Ini"
-          value={stats.loans.total_this_month}
-          color="green"
-        />
-        <StatCard
-          icon={Activity}
-          title="Perangkat Dalam Perawatan"
-          value={stats.devices.maintenance}
-          color="yellow"
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="flex items-center justify-center space-x-2 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
-            <Smartphone className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-700 font-medium">Tambah Perangkat</span>
-          </button>
-          <button className="flex items-center justify-center space-x-2 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors">
-            <Users className="w-5 h-5 text-green-600" />
-            <span className="text-green-700 font-medium">Kelola Pengguna</span>
-          </button>
-          <button className="flex items-center justify-center space-x-2 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg border border-yellow-200 transition-colors">
-            <FileText className="w-5 h-5 text-yellow-600" />
-            <span className="text-yellow-700 font-medium">Lihat Laporan</span>
-          </button>
+      <div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Statistik Perangkat</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard icon={Smartphone} title="Total Perangkat" value={stats.devices.total} subtitle={`${stats.devices.available} tersedia`} color="blue" />
+          <StatCard icon={CheckCircle} title="Kondisi Baik" value={stats.devices.good_condition} subtitle="Siap digunakan" color="green" />
+          <StatCard icon={Settings} title="Dalam Perawatan" value={stats.devices.maintenance} subtitle="Sedang diperbaiki" color="yellow" />
+          <StatCard icon={XCircle} title="Rusak Berat" value={stats.devices.heavy_damage} subtitle="Perlu perhatian" color="red" />
         </div>
       </div>
 
-      {/* System Status */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Status Sistem</h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Server Status</span>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600">Online</span>
+      <div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Statistik Peminjaman</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard icon={FileText} title="Peminjaman Aktif" value={stats.loans.active} subtitle="Sedang berlangsung" color="blue" />
+          <StatCard icon={AlertTriangle} title="Terlambat" value={stats.loans.overdue} subtitle="Perlu tindak lanjut" color="red" />
+          <StatCard icon={Calendar} title="Bulan Ini" value={stats.loans.total_this_month} subtitle={`${stats.loans.total_this_week} minggu ini`} color="green" />
+          <StatCard icon={CheckCircle} title="Total Selesai" value={stats.loans.returned} subtitle={`${stats.loans.cancelled} dibatalkan`} color="purple" />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Statistik Pengguna</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StatCard icon={Users} title="Total Pengguna" value={stats.users.total} subtitle={`${stats.users.active} aktif`} color="blue" />
+          <StatCard icon={UserCheck} title="Terverifikasi" value={stats.users.verified} subtitle="Akun disetujui" color="green" />
+          <StatCard icon={UserX} title="Pending Approval" value={stats.users.pending} subtitle="Menunggu persetujuan" color="yellow" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TopItemCard title="Perangkat Paling Sering Dipinjam" items={stats.loans.most_borrowed_devices} icon={TrendingUp} color="blue" />
+        <TopItemCard title="Peminjam Paling Aktif" items={stats.loans.top_borrowers} icon={Users} color="green" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center mb-4">
+            <PieChart className="w-5 h-5 text-indigo-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Ringkasan Perangkat</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-sm text-gray-600">Tingkat Penggunaan</span>
+              <span className="text-sm font-bold text-gray-900">
+                {stats.devices.total > 0 ? ((stats.devices.in_use / stats.devices.total) * 100).toFixed(1) : '0.0'}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-sm text-gray-600">Ketersediaan</span>
+              <span className="text-sm font-bold text-green-600">
+                {stats.devices.total > 0 ? ((stats.devices.available / stats.devices.total) * 100).toFixed(1) : '0.0'}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-sm text-gray-600">Kondisi Baik</span>
+              <span className="text-sm font-bold text-green-600">
+                {stats.devices.total > 0 ? ((stats.devices.good_condition / stats.devices.total) * 100).toFixed(1) : '0.0'}%
+              </span>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Database</span>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600">Connected</span>
-            </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center mb-4">
+            <BarChart3 className="w-5 h-5 text-purple-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Ringkasan Peminjaman</h3>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Last Update</span>
-            <span className="text-sm text-gray-500">
-              {new Date().toLocaleTimeString('id-ID')}
-            </span>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+              <span className="text-sm text-gray-600">Total Peminjaman</span>
+              <span className="text-sm font-bold text-gray-900">{stats.loans.total_loans.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+              <span className="text-sm text-gray-600">Selesai</span>
+              <span className="text-sm font-bold text-green-600">{stats.loans.returned.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+              <span className="text-sm text-gray-600">Aktif</span>
+              <span className="text-sm font-bold text-yellow-600">{stats.loans.active.toLocaleString()}</span>
+            </div>
           </div>
         </div>
       </div>

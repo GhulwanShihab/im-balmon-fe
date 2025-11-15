@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, Mail, Smartphone, ArrowRight, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { TokenManager, setupAutoRefresh } from '../services/api'; // 🔥 Import utilities
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false); // 🔥 Add remember me
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -28,9 +30,13 @@ const LoginPage = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Email atau password salah');
 
-      // Simpan token di sessionStorage
-      sessionStorage.setItem('token', data.access_token);
-      sessionStorage.setItem('refresh_token', data.refresh_token);
+      // 🔥 Store remember me preference first
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('rememberMe', rememberMe.toString());
+
+      // 🔥 Use TokenManager to store tokens with proper expiry
+      const expiresIn = data.expires_in || 1800; // Default 30 minutes
+      TokenManager.setTokens(data.access_token, data.refresh_token, expiresIn);
 
       // Ambil data user
       const meRes = await fetch('http://localhost:8000/api/v1/users/me', {
@@ -46,14 +52,13 @@ const LoginPage = () => {
       // 🟡 CEK STATUS USER SEBELUM LANJUT LOGIN
       if (!userData.is_active || !userData.is_verified) {
         toast.error('Akun Anda belum disetujui oleh admin. Silakan coba lagi nanti.');
-        // Hapus token agar tidak bisa akses area user
-        sessionStorage.clear();
+        TokenManager.clearTokens();
         setLoading(false);
         return;
       }
 
-      // Simpan data user jika sudah aktif
-      sessionStorage.setItem('user', JSON.stringify(userData));
+      // Simpan data user
+      storage.setItem('user', JSON.stringify(userData));
 
       // Ambil role user
       const roleRes = await fetch('http://localhost:8000/api/v1/users/me/roles', {
@@ -65,16 +70,20 @@ const LoginPage = () => {
 
       const roleData = await roleRes.json();
       const roles = roleData.roles || [];
-      sessionStorage.setItem('roles', JSON.stringify(roles));
+      storage.setItem('roles', JSON.stringify(roles));
+
+      // 🔥 Setup auto-refresh after successful login
+      setupAutoRefresh();
 
       // Redirect berdasarkan role
       const roleNames = roles.map((r) => r.name);
       if (roleNames.includes('admin')) {
         toast.success(`Selamat datang, ${userData.full_name || 'Admin'}!`);
         navigate('/admin', { replace: true });
-      } else if (roleNames.includes('pimpinan')) {
-        toast.success(`Selamat datang, ${userData.full_name || 'Pimpinan'}!`);
-        navigate('/admin', { replace: true });
+      } else if (roleNames.includes('manager')) {
+        // 🆕 Deteksi manager
+        toast.success(`Selamat datang, ${userData.full_name || 'Manager'}!`);
+        navigate('/manager', { replace: true });
       } else {
         toast.success(`Selamat datang, ${userData.full_name || 'User'}!`);
         navigate('/user', { replace: true });
@@ -165,11 +174,25 @@ const LoginPage = () => {
                 </div>
               </div>
 
+              {/* 🔥 Remember Me */}
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                  Ingat saya
+                </label>
+              </div>
+
               {/* Tombol Login */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 transition-all duration-300"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -207,7 +230,7 @@ const LoginPage = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes blob {
           0% { transform: translate(0px, 0px) scale(1); }
           33% { transform: translate(30px, -50px) scale(1.1); }

@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
-import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Eye, EyeOff, AlertCircle, CheckCircle, Shield } from "lucide-react";
+import { getRoles } from "../services/userService";
+import toast from "react-hot-toast";
 
 const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
   const [form, setForm] = useState({
@@ -7,12 +9,44 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
     email: initialData.email || "",
     password: "",
     is_active: initialData.is_active ?? true,
+    role_ids: initialData.role_ids || [], // Array of role IDs
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(null);
+  const [roles, setRoles] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+
+  // Fetch available roles
+  useEffect(() => {
+    const fetchRoles = async () => {
+      setLoadingRoles(true);
+      try {
+        const data = await getRoles();
+        setRoles(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+        toast.error("Gagal memuat daftar role");
+        setRoles([]);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+    fetchRoles();
+  }, []);
+
+  // Set initial role_ids from initialData
+  useEffect(() => {
+    if (initialData && initialData.roles && Array.isArray(initialData.roles)) {
+      // Extract role IDs from roles array
+      const roleIds = initialData.roles.map((role) => 
+        typeof role === 'object' ? role.id : role
+      );
+      setForm((prev) => ({ ...prev, role_ids: roleIds }));
+    }
+  }, [initialData]);
 
   useEffect(() => {
     if (initialData) {
@@ -21,6 +55,7 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
         email: initialData.email || "",
         password: "",
         is_active: initialData.is_active ?? true,
+        role_ids: initialData.role_ids || [],
       });
     }
   }, [initialData]);
@@ -62,7 +97,7 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
 
   const validatePassword = (password) => {
     const errors = [];
-    
+
     if (password.length < 8) {
       errors.push("Password minimal 8 karakter");
     }
@@ -107,7 +142,7 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === "checkbox" ? checked : value;
-    
+
     setForm({ ...form, [name]: newValue });
 
     // Clear error for this field
@@ -119,6 +154,21 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
     if (name === "password") {
       setPasswordStrength(calculatePasswordStrength(value));
     }
+  };
+
+  const handleRoleChange = (roleId) => {
+    const roleIdNum = parseInt(roleId);
+    setForm((prev) => {
+      const currentRoles = prev.role_ids || [];
+      const isSelected = currentRoles.includes(roleIdNum);
+
+      return {
+        ...prev,
+        role_ids: isSelected
+          ? currentRoles.filter((id) => id !== roleIdNum)
+          : [...currentRoles, roleIdNum],
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -133,7 +183,7 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
     try {
       // Prepare data to send
       const dataToSend = { ...form };
-      
+
       // If editing and password is empty, remove it from the data
       if (isEdit && !form.password) {
         delete dataToSend.password;
@@ -197,7 +247,12 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
       <div>
         <label className="block mb-2 font-medium text-slate-700">
           Password {!isEdit && <span className="text-red-500">*</span>}
-          {isEdit && <span className="text-slate-500 text-sm font-normal"> (kosongkan jika tidak ingin mengubah)</span>}
+          {isEdit && (
+            <span className="text-slate-500 text-sm font-normal">
+              {" "}
+              (kosongkan jika tidak ingin mengubah)
+            </span>
+          )}
         </label>
         <div className="relative">
           <input
@@ -270,6 +325,56 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
               />
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Roles Selection */}
+      <div>
+        <label className="block mb-2 font-medium text-slate-700 flex items-center gap-2">
+          <Shield size={18} className="text-purple-600" />
+          Role Pengguna
+        </label>
+        
+        {loadingRoles ? (
+          <div className="p-4 bg-slate-50 rounded-lg text-center text-slate-500">
+            Memuat daftar role...
+          </div>
+        ) : roles.length === 0 ? (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center text-yellow-700">
+            Tidak ada role tersedia. Hubungi administrator.
+          </div>
+        ) : (
+          <div className="space-y-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            {roles.map((role) => (
+              <label
+                key={role.id}
+                className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-purple-300 transition-colors cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={form.role_ids.includes(role.id)}
+                  onChange={() => handleRoleChange(role.id)}
+                  className="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-2 focus:ring-purple-500"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Shield size={16} className="text-purple-600" />
+                    <span className="font-medium text-slate-800">{role.name}</span>
+                  </div>
+                  {role.description && (
+                    <p className="text-sm text-slate-500 mt-1">{role.description}</p>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
+        
+        {form.role_ids.length === 0 && (
+          <p className="mt-2 text-sm text-slate-500 flex items-center gap-1">
+            <AlertCircle size={14} />
+            Pilih minimal satu role untuk pengguna
+          </p>
         )}
       </div>
 
