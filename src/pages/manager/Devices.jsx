@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, QrCode, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import apiClient from "../../../services/api";
-import QRCodeGenerator from "../../../components/QRCodeGenerator";
+import { Eye, QrCode, Search, ChevronLeft, ChevronRight, FileDown } from "lucide-react";
+import apiClient from "../../services/api";
+import QRCodeGenerator from "../../components/QRCodeGenerator";
 
 const ManagerDevices = () => {
   const navigate = useNavigate();
@@ -18,6 +18,15 @@ const ManagerDevices = () => {
     device_condition: "",
     device_status: "",
     device_room: "",
+  });
+
+  // 🆕 Export Excel States
+  const [isExporting, setIsExporting] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportFilters, setExportFilters] = useState({
+    year: "",
+    month: "",
+    device_ids: "",
   });
 
   useEffect(() => {
@@ -65,6 +74,87 @@ const ManagerDevices = () => {
       setLoading(false);
     }
   };
+
+  // 🆕 Export Excel Handler
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+
+      console.log("📤 Manager exporting with filters:", exportFilters);
+
+      // Make API request to export endpoint
+      const response = await apiClient.get(`/devices/export/excel`, {
+        params: {
+          ...(exportFilters.year && { year: exportFilters.year }),
+          ...(exportFilters.month && { month: exportFilters.month }),
+          ...(exportFilters.device_ids && { device_ids: exportFilters.device_ids }),
+        },
+        responseType: "blob", // Important for downloading files
+      });
+
+      console.log("✅ Export response received");
+
+      // Create blob from response
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Generate filename
+      const timestamp = new Date().toISOString().split("T")[0].replace(/-/g, "");
+      const filename = `device_usage_report_${
+        exportFilters.year || "all"
+      }_${exportFilters.month || "all"}_${timestamp}.xlsx`;
+
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Close modal and reset filters
+      setShowExportModal(false);
+      setExportFilters({ year: "", month: "", device_ids: "" });
+
+      alert("✅ File Excel berhasil diunduh!");
+    } catch (error) {
+      console.error("❌ Error exporting to Excel:", error);
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response,
+        status: error.response?.status,
+        url: error.config?.url,
+      });
+      
+      let errorMessage = "Gagal mengekspor data ke Excel. ";
+      
+      if (error.response?.status === 404) {
+        errorMessage += "Endpoint tidak ditemukan. Pastikan router export sudah didaftarkan di backend.";
+      } else if (error.response?.status === 401) {
+        errorMessage += "Anda tidak memiliki akses. Silakan login kembali.";
+      } else if (error.response?.status === 403) {
+        errorMessage += "Anda tidak memiliki permission untuk export data.";
+      } else if (error.response?.status === 500) {
+        errorMessage += "Terjadi kesalahan di server. Cek log backend.";
+      } else {
+        errorMessage += "Silakan coba lagi.";
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Generate year options (current year - 5 to current year + 1)
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 7 }, (_, i) => currentYear - 5 + i);
 
   const DeviceRow = ({ device }) => {
     const [expanded, setExpanded] = useState(false);
@@ -185,6 +275,26 @@ const ManagerDevices = () => {
               </td>
             </>
           )}
+
+          {/* Jika parent memiliki children, tampilkan kolom kosong */}
+          {hasChildren && (
+            <>
+              <td colSpan="5" className="px-4 py-4">
+                <div className="text-sm text-gray-500">
+                  Klik untuk melihat perangkat anak
+                </div>
+              </td>
+              <td className="px-4 py-4 text-right">
+                <button
+                  onClick={() => navigate(`/manager/devices/${device.id}/view`)}
+                  className="p-1 text-green-600 hover:text-green-800"
+                  title="Lihat Detail Parent"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              </td>
+            </>
+          )}
         </tr>
 
         {/* Child devices */}
@@ -270,14 +380,27 @@ const ManagerDevices = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header - READ ONLY (tanpa tombol tambah) */}
+      {/* 🆕 Header with Export Button */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Data Perangkat</h1>
           <p className="text-gray-600 mt-1">Lihat informasi semua perangkat dalam sistem</p>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2">
-          <p className="text-sm text-green-800 font-medium">📖 Mode Tampilan (Read-Only)</p>
+        <div className="flex items-center space-x-3">
+          {/* 🆕 Export Excel Button */}
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-sm"
+            disabled={isExporting}
+          >
+            <FileDown className="w-4 h-4" />
+            <span>{isExporting ? "Mengekspor..." : "Export Excel"}</span>
+          </button>
+          
+          {/* Read-Only Badge */}
+          <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+            <p className="text-sm text-green-800 font-medium">📖 Mode Tampilan</p>
+          </div>
         </div>
       </div>
 
@@ -399,6 +522,131 @@ const ManagerDevices = () => {
           </>
         )}
       </div>
+
+      {/* 🆕 Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Export Data Perangkat
+            </h2>
+
+            <div className="space-y-4">
+              {/* Year Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tahun (Opsional)
+                </label>
+                <select
+                  value={exportFilters.year}
+                  onChange={(e) =>
+                    setExportFilters({ ...exportFilters, year: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="">Semua Tahun</option>
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Month Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bulan (Opsional)
+                </label>
+                <select
+                  value={exportFilters.month}
+                  onChange={(e) =>
+                    setExportFilters({ ...exportFilters, month: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  disabled={!exportFilters.year}
+                >
+                  <option value="">Semua Bulan</option>
+                  <option value="1">Januari</option>
+                  <option value="2">Februari</option>
+                  <option value="3">Maret</option>
+                  <option value="4">April</option>
+                  <option value="5">Mei</option>
+                  <option value="6">Juni</option>
+                  <option value="7">Juli</option>
+                  <option value="8">Agustus</option>
+                  <option value="9">September</option>
+                  <option value="10">Oktober</option>
+                  <option value="11">November</option>
+                  <option value="12">Desember</option>
+                </select>
+                {!exportFilters.year && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Pilih tahun terlebih dahulu untuk memfilter bulan
+                  </p>
+                )}
+              </div>
+
+              {/* Device IDs Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ID Perangkat Spesifik (Opsional)
+                </label>
+                <input
+                  type="text"
+                  value={exportFilters.device_ids}
+                  onChange={(e) =>
+                    setExportFilters({
+                      ...exportFilters,
+                      device_ids: e.target.value,
+                    })
+                  }
+                  placeholder="Contoh: 1,2,3,4"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Pisahkan dengan koma untuk beberapa ID
+                </p>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-800">
+                  <strong>File Excel akan berisi:</strong>
+                </p>
+                <ul className="text-xs text-green-700 mt-2 ml-4 list-disc space-y-1">
+                  <li>Dashboard & Summary</li>
+                  <li>Data Semua Perangkat</li>
+                  <li>Statistik Bulanan</li>
+                  <li>Statistik Tahunan</li>
+                  <li>Detail Riwayat Peminjaman</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowExportModal(false);
+                  setExportFilters({ year: "", month: "", device_ids: "" });
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isExporting}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleExportExcel}
+                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={isExporting}
+              >
+                {isExporting ? "Mengekspor..." : "Export"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* QR Code Modal */}
       <QRCodeGenerator

@@ -8,12 +8,11 @@ import {
   Smartphone,
   Calendar,
   User,
-  FileText,
-  Star,
-  MessageSquare
+  MessageSquare,
+  Star
 } from 'lucide-react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
+import apiClient from '../../services/api'; // ✅ Import apiClient
 
 const ReturnPage = () => {
   const [loans, setLoans] = useState([]);
@@ -35,9 +34,8 @@ const ReturnPage = () => {
   const fetchLoans = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
-      const response = await axios.get('/api/v1/loans/my-loans', {
-        headers: { Authorization: `Bearer ${token}` },
+      // ✅ Gunakan apiClient.get (token otomatis ditambahkan)
+      const response = await apiClient.get('/loans/my-loans', {
         params: { page_size: 50 }
       });
 
@@ -61,6 +59,11 @@ const ReturnPage = () => {
     } catch (error) {
       console.error('Error fetching loans:', error);
       toast.error('Gagal memuat data peminjaman');
+      
+      // ✅ Handle error 401 (redirect ke login jika unauthorized)
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -73,10 +76,8 @@ const ReturnPage = () => {
     // Jika loan_items tidak ada, fetch detail loan terlebih dahulu
     if (!loan.loan_items || loan.loan_items.length === 0) {
       try {
-        const token = sessionStorage.getItem('token');
-        const response = await axios.get(`/api/v1/loans/${loan.id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        // ✅ Gunakan apiClient.get
+        const response = await apiClient.get(`/loans/${loan.id}`);
         console.log('Fetched loan detail:', response.data);
         setSelectedLoan(response.data);
       } catch (error) {
@@ -94,8 +95,7 @@ const ReturnPage = () => {
     setSubmitting(true);
 
     try {
-      const token = sessionStorage.getItem('token');
-
+      // ✅ Gunakan apiClient.post (token otomatis)
       const payload = {
         actual_return_date: new Date().toISOString().split('T')[0],
         return_notes: returnData.return_notes || '',
@@ -109,18 +109,28 @@ const ReturnPage = () => {
 
       console.log('Payload pengembalian:', payload);
 
-      const response = await axios.post(
-        `/api/v1/loans/${selectedLoan.id}/return`,
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await apiClient.post(
+        `/loans/${selectedLoan.id}/return`,
+        payload
       );
 
       toast.success('Pengajuan pengembalian berhasil! Menunggu verifikasi admin.');
       setShowReturnModal(false);
+      setReturnData({
+        device_condition_on_return: 'BAIK',
+        return_notes: '',
+        rating: 5
+      });
       fetchLoans();
     } catch (error) {
       console.error('Return error:', error);
-      toast.error('Gagal mengajukan pengembalian');
+      const errorMessage = error.response?.data?.message || 'Gagal mengajukan pengembalian';
+      toast.error(errorMessage);
+      
+      // ✅ Handle error 401
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -310,7 +320,7 @@ const ReturnPage = () => {
       
             {selectedLoan.loan_items && selectedLoan.loan_items.length > 0 ? (
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {selectedLoan.loan_items && selectedLoan.loan_items.map((item, index) => (
+                {selectedLoan.loan_items.map((item, index) => (
                   <div key={item.id} className="border rounded-xl p-4 bg-gray-50">
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -391,9 +401,14 @@ const ReturnPage = () => {
                 onClick={() => {
                   setShowReturnModal(false);
                   setSelectedLoan(null);
+                  setReturnData({
+                    device_condition_on_return: 'BAIK',
+                    return_notes: '',
+                    rating: 5
+                  });
                 }}
                 disabled={submitting}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-xl transition-colors"
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-xl transition-colors disabled:opacity-50"
               >
                 Batal
               </button>

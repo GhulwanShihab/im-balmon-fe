@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Users,
   UserCheck,
@@ -28,6 +28,7 @@ import {
   deleteUser,
   getUserStats,
   unlockUserAccount,
+  getUserWithRoles,
 } from "./services/userService";
 import toast from "react-hot-toast";
 
@@ -53,7 +54,11 @@ const AdminUserManagement = () => {
     new_users_this_month: 0,
   });
 
-  // Fetch all users
+  // Tambahkan ref untuk mencegah multiple fetch
+  const isFetchingRef = useRef(false);
+  const mountedRef = useRef(false);
+
+  // Fetch all users dengan protection
   const fetchUsers = async (showLoader = true) => {
     if (showLoader) setLoading(true);
     try {
@@ -66,6 +71,7 @@ const AdminUserManagement = () => {
 
       if (filters.search) params.email = filters.search;
       if (filters.is_active !== "") params.is_active = filters.is_active === "true";
+      if (filters.role) params.role = filters.role;
 
       const cleanParams = Object.fromEntries(
         Object.entries(params).filter(([, v]) => v !== "" && v !== null && v !== undefined)
@@ -73,6 +79,7 @@ const AdminUserManagement = () => {
 
       const data = await getUsers(cleanParams);
 
+      // Langsung set users tanpa fetch roles
       setUsers(Array.isArray(data.users) ? data.users : []);
       setMeta({
         total: data.total || 0,
@@ -87,9 +94,13 @@ const AdminUserManagement = () => {
     }
   };
 
-  // Fetch pending users
+  // Fetch pending users dengan protection
   const fetchPendingUsers = async (showLoader = true) => {
+    if (isFetchingRef.current) return;
+    
+    isFetchingRef.current = true;
     if (showLoader) setLoading(true);
+    
     try {
       const params = {
         page,
@@ -97,48 +108,60 @@ const AdminUserManagement = () => {
       };
 
       const data = await getPendingUsers(params);
-
-      setPendingUsers(Array.isArray(data.users) ? data.users : []);
-      setMeta({
-        total: data.total || 0,
-        total_pages: data.total_pages || 1,
-        page: data.page || 1,
-      });
+      
+      if (mountedRef.current) {
+        setPendingUsers(Array.isArray(data.users) ? data.users : []);
+        setMeta({
+          total: data.total || 0,
+          total_pages: data.total_pages || 1,
+          page: data.page || 1,
+        });
+      }
     } catch (error) {
       console.error("Error fetching pending users:", error);
-      toast.error(error.response?.data?.detail || "Gagal memuat data pengguna pending");
+      
+      if (error.response?.status !== 401 && mountedRef.current) {
+        toast.error(error.response?.data?.detail || "Gagal memuat data pengguna pending");
+      }
     } finally {
-      if (showLoader) setLoading(false);
+      isFetchingRef.current = false;
+      if (showLoader && mountedRef.current) setLoading(false);
     }
   };
 
   // Fetch roles
-  const fetchRoles = async () => {
-    try {
-      const data = await getRoles();
-      setRoles(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching roles:", error);
-      toast.error("Gagal memuat data roles");
-    }
-  };
+  //const fetchRoles = async () => {
+    //try {
+      //const data = await getRoles();
+      //if (mountedRef.current) {
+        //setRoles(Array.isArray(data) ? data : []);
+      //}
+    //} catch (error) {
+      //console.error("Error fetching roles:", error);
+      //if (error.response?.status !== 401 && mountedRef.current) {
+        //toast.error("Gagal memuat data roles");
+      //}
+    //}
+  //};
 
   // Fetch stats
   const fetchStats = async () => {
     try {
       const data = await getUserStats();
 
-      setStats({
-        total_users: data.total_users || 0,
-        active_users: data.active_users || 0,
-        verified_users: data.verified_users || 0,
-        locked_users: data.locked_users || 0,
-        mfa_enabled_users: data.mfa_enabled_users || 0,
-        pending_users: data.pending_users || 0,
-        new_users_today: data.new_users_today || 0,
-        new_users_this_week: data.new_users_this_week || 0,
-        new_users_this_month: data.new_users_this_month || 0,
-      });
+      if (mountedRef.current) {
+        setStats({
+          total_users: data.total_users || 0,
+          active_users: data.active_users || 0,
+          verified_users: data.verified_users || 0,
+          locked_users: data.locked_users || 0,
+          mfa_enabled_users: data.mfa_enabled_users || 0,
+          pending_users: data.pending_users || 0,
+          new_users_today: data.new_users_today || 0,
+          new_users_this_week: data.new_users_this_week || 0,
+          new_users_this_month: data.new_users_this_month || 0,
+        });
+      }
     } catch (error) {
       console.error("Error fetching stats:", error);
       // Don't show error toast for stats, as it's not critical
@@ -154,8 +177,10 @@ const AdminUserManagement = () => {
     } else {
       await fetchPendingUsers(false);
     }
-    setRefreshing(false);
-    toast.success("Data berhasil diperbarui");
+    if (mountedRef.current) {
+      setRefreshing(false);
+      toast.success("Data berhasil diperbarui");
+    }
   };
 
   // Handle approve user
@@ -195,19 +220,19 @@ const AdminUserManagement = () => {
   };
 
   // Handle role change
-  const handleRoleChange = async (userId, roleNames) => {
-    try {
-      // Convert role names to role IDs
-      const roleIds = roles.filter((role) => roleNames.includes(role.name)).map((role) => role.id);
-
-      await updateUserRole(userId, { role_ids: roleIds });
-      toast.success("✅ Role pengguna berhasil diperbarui");
-      await fetchUsers(false);
-    } catch (error) {
-      console.error("Error updating role:", error);
-      toast.error(error.response?.data?.detail || "Gagal memperbarui role");
-    }
-  };
+  //const handleRoleChange = async (userId, roleNames) => {
+    //try {
+      //// Convert role names to role IDs
+      //const roleIds = roles.filter((role) => roleNames.includes(role.name)).map((role) => role.id);
+//
+      //await updateUserRole(userId, { role_ids: roleIds });
+      //toast.success("✅ Role pengguna berhasil diperbarui");
+      //await fetchUsers(false);
+    //} catch (error) {
+      //console.error("Error updating role:", error);
+      //toast.error(error.response?.data?.detail || "Gagal memperbarui role");
+    //}
+  //};
 
   // Handle delete user
   const handleDelete = async (userId) => {
@@ -242,14 +267,27 @@ const AdminUserManagement = () => {
     }
   };
 
+  // Setup mounted ref
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Initial load
   useEffect(() => {
-    fetchRoles();
-    fetchStats();
+    if (mountedRef.current) {
+      //fetchRoles();
+      fetchStats();
+    }
   }, []);
 
   // Load data when tab or page changes
   useEffect(() => {
+    if (!mountedRef.current) return;
+    
     if (activeTab === "all") {
       fetchUsers();
     } else {
@@ -259,9 +297,18 @@ const AdminUserManagement = () => {
 
   // Reset page and fetch when filters change
   useEffect(() => {
+    if (!mountedRef.current) return;
+    
     if (activeTab === "all") {
       setPage(1);
-      fetchUsers();
+      // Gunakan timeout kecil untuk mencegah race condition
+      const timeoutId = setTimeout(() => {
+        if (mountedRef.current) {
+          fetchUsers();
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [filters.search, filters.is_active, filters.role]);
 
@@ -404,7 +451,6 @@ const AdminUserManagement = () => {
               <UsersTable
                 users={users}
                 roles={roles}
-                onRoleChange={handleRoleChange}
                 onDelete={handleDelete}
                 onUnlock={handleUnlock}
               />
@@ -534,10 +580,10 @@ const UsersTable = ({ users, roles, onRoleChange, onDelete, onUnlock }) => {
                     </div>
                     <div className="min-w-0">
                       <p className="font-medium text-slate-800 truncate">{user.username}</p>
-                      <p className="text-xs text-slate-500 md:hidden truncate">{user.email}</p>
+                      {/*<p className="text-xs text-slate-500 md:hidden truncate">{user.email}</p>
                       <p className="text-xs text-slate-500">
                         {user.created_at ? new Date(user.created_at).toLocaleDateString("id-ID") : "-"}
-                      </p>
+                      </p> */}
                     </div>
                   </div>
                 </td>
@@ -559,65 +605,10 @@ const UsersTable = ({ users, roles, onRoleChange, onDelete, onUnlock }) => {
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-4 hidden lg:table-cell">
-                  {editingRole === user.id ? (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <select
-                        multiple
-                        value={selectedRoles}
-                        onChange={(e) =>
-                          setSelectedRoles(Array.from(e.target.selectedOptions, (option) => option.value))
-                        }
-                        className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 min-w-[120px]"
-                        size={Math.min(roles.length, 4)}
-                      >
-                        {roles.map((role) => (
-                          <option key={role.id} value={role.name}>
-                            {role.name}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => handleRoleSave(user.id)}
-                          className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
-                        >
-                          Simpan
-                        </button>
-                        <button
-                          onClick={() => setEditingRole(null)}
-                          className="px-3 py-1.5 bg-slate-300 text-slate-700 rounded-lg text-sm hover:bg-slate-400 transition-colors"
-                        >
-                          Batal
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="flex gap-1 flex-wrap">
-                        {userRoles.length > 0 ? (
-                          userRoles.map((role, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700"
-                            >
-                              <Shield size={12} />
-                              {role}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-slate-400">No role</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleRoleEdit(user.id, userRoles)}
-                        className="p-1 hover:bg-slate-200 rounded transition-colors"
-                        title="Edit Role"
-                      >
-                        <Edit2 size={14} className="text-slate-600" />
-                      </button>
-                    </div>
-                  )}
+                <td className="py-4 px-4 text-slate-600 hidden md:table-cell">
+                  {user.roles?.length > 0
+                    ? user.roles.map(r => r.name).join(", ") 
+                    : "-"}
                 </td>
                 <td className="py-4 px-4">
                   <div className="flex items-center justify-center gap-1 md:gap-2">

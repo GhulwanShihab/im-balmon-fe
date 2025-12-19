@@ -10,7 +10,9 @@ import {
   ChevronRight,
   ChevronUp,
   ChevronDown,
-  Activity
+  Activity,
+  FileText,
+  Wrench
 } from 'lucide-react';
 import apiClient from '../../services/api';
 
@@ -24,78 +26,161 @@ const UserDashboard = () => {
     total_devices: 0,
     available_devices: 0,
     borrowed_devices: 0,
-    my_active_loans: 0
+    maintenance_devices: 0
   });
+  const [myActiveLoans, setMyActiveLoans] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchDevices();
-    fetchStats();
+    fetchMyLoansCount();
   }, [searchTerm, statusFilter]);
+
+  const fetchMyLoansCount = async () => {
+    try {
+      const response = await apiClient.get('/loans/my-loans', { 
+        params: { page: 1, page_size: 1 } 
+      });
+      setMyActiveLoans(response.data.total || 0);
+    } catch (error) {
+      console.error('❌ Error fetching my loans count:', error);
+      setMyActiveLoans(0);
+    }
+  };
 
   const fetchDevices = async () => {
     try {
       setLoading(true);
       const params = {
-        page_size: 20,
+        page: 1,
+        page_size: 100, // Increased to get more devices
         ...(searchTerm && { device_name: searchTerm }),
         ...(statusFilter && { device_status: statusFilter })
       };
 
-      const response = await apiClient.get('/devices/', {
-        params
+      console.log('📡 Fetching devices with params:', params);
+
+      const response = await apiClient.get('/devices/', { params });
+      
+      console.log('✅ Devices response:', response.data);
+
+      // Process devices - parent devices might have children
+      const processedDevices = (response.data.devices || []).map(device => {
+        // Log device structure to debug
+        console.log('Device structure:', {
+          id: device.id,
+          name: device.device_name,
+          hasChildren: !!device.children,
+          childrenCount: device.children?.length || 0
+        });
+
+        return {
+          ...device,
+          children: device.children || [] // Ensure children array exists
+        };
       });
 
-      setDevices(response.data.devices || []);
+      setDevices(processedDevices);
     } catch (error) {
-      console.error('Error fetching devices:', error);
+      console.error('❌ Error fetching devices:', error);
+      setDevices([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const [deviceStats, myLoans] = await Promise.all([
-        apiClient.get('/devices/stats'),
-        apiClient.get('/loans/my-loans?page_size=1')
-      ]);
-
+  // Calculate stats from devices data
+  useEffect(() => {
+    if (!devices || devices.length === 0) {
       setStats({
-        total_devices: deviceStats.data.total || 0,
-        available_devices: deviceStats.data.available || 0,
-        borrowed_devices: deviceStats.data.in_use || 0,
-        my_active_loans: myLoans.data.total || 0
+        total_devices: 0,
+        available_devices: 0,
+        borrowed_devices: 0,
+        maintenance_devices: 0
       });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
+      return;
     }
-  };
+
+    // Flatten devices: include parent devices without children AND all child devices
+    const allDevices = devices.reduce((acc, device) => {
+      if (device.children && device.children.length > 0) {
+        // If has children, only count the children
+        return [...acc, ...device.children];
+      } else {
+        // If no children, count the parent device
+        return [...acc, device];
+      }
+    }, []);
+
+    console.log('📊 Calculating stats from devices:', allDevices.length);
+
+    const totalDevices = allDevices.length;
+    const availableDevices = allDevices.filter(d => 
+      d.device_status?.toUpperCase() === 'TERSEDIA'
+    ).length;
+    const borrowedDevices = allDevices.filter(d => 
+      d.device_status?.toUpperCase() === 'DIPINJAM'
+    ).length;
+    const maintenanceDevices = allDevices.filter(d => 
+      d.device_status?.toUpperCase() === 'MAINTENANCE'
+    ).length;
+
+    console.log('📊 Stats calculated:', {
+      total: totalDevices,
+      available: availableDevices,
+      borrowed: borrowedDevices,
+      maintenance: maintenanceDevices
+    });
+
+    setStats({
+      total_devices: totalDevices,
+      available_devices: availableDevices,
+      borrowed_devices: borrowedDevices,
+      maintenance_devices: maintenanceDevices
+    });
+  }, [devices]);
 
   const getStatusBadge = (status) => {
     const normalized = (status || "").toUpperCase();
     
-    switch (normalized) {
-      case "TERSEDIA":
-        return <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Tersedia</span>;
-      case "DIPINJAM":
-        return <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">Dipinjam</span>;
-      case "MAINTENANCE":
-        return <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded">Maintenance</span>;
-      case "NONAKTIF":
-        return <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">Nonaktif</span>;
-      default:
-        return <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">Tidak Diketahui</span>;
-    }
-  };
+    const statusConfig = {
+      'TERSEDIA': { 
+        label: 'Tersedia', 
+        className: 'bg-green-100 text-green-800' 
+      },
+      'DIPINJAM': { 
+        label: 'Dipinjam', 
+        className: 'bg-yellow-100 text-yellow-800' 
+      },
+      'MAINTENANCE': { 
+        label: 'Maintenance', 
+        className: 'bg-orange-100 text-orange-800' 
+      },
+      'NONAKTIF': { 
+        label: 'Nonaktif', 
+        className: 'bg-gray-100 text-gray-800' 
+      }
+    };
 
+    const config = statusConfig[normalized] || { 
+      label: 'Tidak Diketahui', 
+      className: 'bg-gray-100 text-gray-800' 
+    };
+
+    return (
+      <span className={`${config.className} text-xs font-medium px-2.5 py-0.5 rounded`}>
+        {config.label}
+      </span>
+    );
+  };
 
   const StatCard = ({ icon: Icon, title, value, subtitle, color = 'blue' }) => {
     const colorClasses = {
       blue: 'from-blue-500 to-blue-600',
       green: 'from-green-500 to-green-600',
       yellow: 'from-yellow-500 to-yellow-600',
-      purple: 'from-purple-500 to-purple-600'
+      purple: 'from-purple-500 to-purple-600',
+      orange: 'from-orange-500 to-orange-600'
     };
 
     return (
@@ -123,6 +208,16 @@ const UserDashboard = () => {
     }));
   };
 
+  const handleBorrowDevice = (device) => {
+    console.log('🎯 Borrowing device:', device);
+    navigate("/user/borrow", { 
+      state: { 
+        selectedDevice: device,
+        isChildDevice: !!device.parent_id // Flag to identify child device
+      } 
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -143,8 +238,8 @@ const UserDashboard = () => {
         </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Grid - 5 cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           icon={Smartphone}
           title="Total Perangkat"
@@ -164,10 +259,16 @@ const UserDashboard = () => {
           color="yellow"
         />
         <StatCard
-          icon={Activity}
+          icon={Wrench}
+          title="Maintenance"
+          value={stats.maintenance_devices}
+          color="orange"
+        />
+        <StatCard
+          icon={FileText}
           title="Peminjaman Saya"
-          value={stats.my_active_loans}
-          color="purple"
+          value={myActiveLoans}
+          color="blue"
         />
       </div>
 
@@ -198,9 +299,10 @@ const UserDashboard = () => {
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
               >
                 <option value="">Semua Status</option>
-                <option value="tersedia">Tersedia</option>
-                <option value="dipinjam">Sedang Digunakan</option>
-                <option value="maintenance">Maintenance</option>
+                <option value="TERSEDIA">Tersedia</option>
+                <option value="DIPINJAM">Sedang Digunakan</option>
+                <option value="MAINTENANCE">Maintenance</option>
+                <option value="NONAKTIF">Nonaktif</option>
               </select>
             </div>
           </div>
@@ -228,27 +330,37 @@ const UserDashboard = () => {
                 return (
                   <div
                     key={device.id}
-                    className="bg-white border border-gray-200 rounded-lg shadow-sm p-4"
+                    className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow"
                   >
                     {/* 🧩 Info utama device */}
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-800">{device.device_name}</h3>
-                        <p className="text-sm text-gray-500">
-                          {device.device_code} • {device.nup_device}
-                        </p>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 pr-2">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                          {device.device_name}
+                        </h3>
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-500">
+                            Kode: {device.device_code || '-'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            NUP: {device.nup_device || '-'}
+                          </p>
+                          {device.bmn_brand && (
+                            <p className="text-xs text-gray-500">
+                              Brand: {device.bmn_brand}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
                       {/* ❌ Sembunyikan status dan tombol pinjam kalau punya child */}
                       {!hasChildren && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-end gap-2">
                           {getStatusBadge(status)}
                           {status === "TERSEDIA" && (
                             <button
-                              onClick={() =>
-                                navigate("/user/borrow", { state: { selectedDevice: device } })
-                              }
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-lg text-xs"
+                              onClick={() => handleBorrowDevice(device)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition-colors shadow-sm"
                             >
                               Pinjam
                             </button>
@@ -259,22 +371,29 @@ const UserDashboard = () => {
                     
                     {/* 🔽 Tombol Expand jika punya anak */}
                     {hasChildren && (
-                      <button
-                        onClick={() => toggleExpand(device.id)}
-                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors text-sm mt-3 flex items-center justify-center space-x-2"
-                      >
-                        {expanded ? (
-                          <>
-                            <ChevronUp className="w-4 h-4" />
-                            <span>Tutup Unit</span>
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown className="w-4 h-4" />
-                            <span>Lihat Unit</span>
-                          </>
-                        )}
-                      </button>
+                      <>
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <p className="text-xs text-gray-500 mb-2">
+                            {device.children.length} unit tersedia
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => toggleExpand(device.id)}
+                          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors text-sm mt-2 flex items-center justify-center space-x-2"
+                        >
+                          {expanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4" />
+                              <span>Tutup Unit</span>
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4" />
+                              <span>Lihat Unit ({device.children.length})</span>
+                            </>
+                          )}
+                        </button>
+                      </>
                     )}
 
                     {/* 📦 Daftar unit anak */}
@@ -285,23 +404,28 @@ const UserDashboard = () => {
                           return (
                             <div
                               key={child.id}
-                              className="flex items-center justify-between py-2 px-3 text-sm"
+                              className="flex items-center justify-between py-3 px-3 hover:bg-gray-100 transition-colors"
                             >
-                              <div>
-                                <h4 className="font-medium text-gray-800">{child.device_name}</h4>
-                                <p className="text-xs text-gray-500">
-                                  {child.device_code} • {child.nup_device}
-                                </p>
+                              <div className="flex-1 pr-2">
+                                <h4 className="font-medium text-gray-800 text-sm">
+                                  {child.device_name}
+                                </h4>
+                                <div className="space-y-0.5 mt-1">
+                                  <p className="text-xs text-gray-500">
+                                    Kode: {child.device_code || '-'}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    NUP: {child.nup_device || '-'}
+                                  </p>
+                                </div>
                               </div>
                           
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-col items-end gap-2">
                                 {getStatusBadge(childStatus)}
                                 {childStatus === "TERSEDIA" && (
                                   <button
-                                    onClick={() =>
-                                      navigate("/user/borrow", { state: { selectedDevice: child } })
-                                    }
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-lg text-xs"
+                                    onClick={() => handleBorrowDevice(child)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition-colors shadow-sm"
                                   >
                                     Pinjam
                                   </button>

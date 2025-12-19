@@ -3,23 +3,22 @@ import { Eye, EyeOff, AlertCircle, CheckCircle, Shield } from "lucide-react";
 import { getRoles } from "../services/userService";
 import toast from "react-hot-toast";
 
-const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
+const UserFormWithRoles = ({ onSubmit, initialData = {}, isEdit = false }) => {
   const [form, setForm] = useState({
     username: initialData.username || "",
     email: initialData.email || "",
     password: "",
     is_active: initialData.is_active ?? true,
-    role_ids: initialData.role_ids || [], // Array of role IDs
+    role_ids: initialData.role_ids || [],
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(null);
   const [roles, setRoles] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
 
-  // Fetch available roles
+  // Fetch roles - HANYA SEKALI
   useEffect(() => {
     const fetchRoles = async () => {
       setLoadingRoles(true);
@@ -37,28 +36,15 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
     fetchRoles();
   }, []);
 
-  // Set initial role_ids from initialData
+  // Update form hanya untuk role_ids saat edit dan roles sudah dimuat
   useEffect(() => {
-    if (initialData && initialData.roles && Array.isArray(initialData.roles)) {
-      // Extract role IDs from roles array
+    if (isEdit && initialData && initialData.roles && roles.length > 0) {
       const roleIds = initialData.roles.map((role) => 
         typeof role === 'object' ? role.id : role
       );
       setForm((prev) => ({ ...prev, role_ids: roleIds }));
     }
-  }, [initialData]);
-
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        username: initialData.username || "",
-        email: initialData.email || "",
-        password: "",
-        is_active: initialData.is_active ?? true,
-        role_ids: initialData.role_ids || [],
-      });
-    }
-  }, [initialData]);
+  }, [roles]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -68,8 +54,6 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
       newErrors.username = "Username wajib diisi";
     } else if (form.username.length < 3) {
       newErrors.username = "Username minimal 3 karakter";
-    } else if (!/^[a-zA-Z0-9_]+$/.test(form.username)) {
-      newErrors.username = "Username hanya boleh huruf, angka, dan underscore";
     }
 
     // Email validation
@@ -79,80 +63,21 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
       newErrors.email = "Format email tidak valid";
     }
 
-    // Password validation (only for create, or if password is filled in edit)
-    if (!isEdit || form.password) {
-      if (!form.password) {
-        newErrors.password = "Password wajib diisi";
-      } else {
-        const passwordErrors = validatePassword(form.password);
-        if (passwordErrors.length > 0) {
-          newErrors.password = passwordErrors[0];
-        }
-      }
+    // Password validation - HANYA CEK TIDAK KOSONG
+    if (!isEdit && !form.password) {
+      newErrors.password = "Password wajib diisi";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const validatePassword = (password) => {
-    const errors = [];
-
-    if (password.length < 8) {
-      errors.push("Password minimal 8 karakter");
-    }
-    if (!/[A-Z]/.test(password)) {
-      errors.push("Password harus mengandung huruf besar");
-    }
-    if (!/[a-z]/.test(password)) {
-      errors.push("Password harus mengandung huruf kecil");
-    }
-    if (!/[0-9]/.test(password)) {
-      errors.push("Password harus mengandung angka");
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      errors.push("Password harus mengandung karakter khusus");
-    }
-
-    return errors;
-  };
-
-  const calculatePasswordStrength = (password) => {
-    if (!password) return null;
-
-    let strength = 0;
-    const checks = [
-      password.length >= 8,
-      password.length >= 12,
-      /[A-Z]/.test(password),
-      /[a-z]/.test(password),
-      /[0-9]/.test(password),
-      /[!@#$%^&*(),.?":{}|<>]/.test(password),
-      password.length >= 16,
-    ];
-
-    strength = checks.filter(Boolean).length;
-
-    if (strength <= 2) return { level: "weak", color: "red", text: "Lemah" };
-    if (strength <= 4) return { level: "medium", color: "yellow", text: "Sedang" };
-    if (strength <= 6) return { level: "strong", color: "green", text: "Kuat" };
-    return { level: "very-strong", color: "emerald", text: "Sangat Kuat" };
-  };
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const newValue = type === "checkbox" ? checked : value;
-
-    setForm({ ...form, [name]: newValue });
-
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: null });
-    }
-
-    // Update password strength
-    if (name === "password") {
-      setPasswordStrength(calculatePasswordStrength(value));
+  // Handle input change
+  const handleInputChange = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }));
     }
   };
 
@@ -161,7 +86,6 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
     setForm((prev) => {
       const currentRoles = prev.role_ids || [];
       const isSelected = currentRoles.includes(roleIdNum);
-
       return {
         ...prev,
         role_ids: isSelected
@@ -175,95 +99,98 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
     e.preventDefault();
 
     if (!validateForm()) {
+      toast.error("Mohon periksa kembali form Anda");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Prepare data to send
       const dataToSend = { ...form };
-
-      // If editing and password is empty, remove it from the data
       if (isEdit && !form.password) {
         delete dataToSend.password;
       }
-
       await onSubmit(dataToSend);
     } catch (error) {
       console.error("Form submission error:", error);
+      toast.error("Terjadi kesalahan saat menyimpan data");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const InputField = ({ label, name, type = "text", required = false, ...props }) => (
-    <div>
-      <label className="block mb-2 font-medium text-slate-700">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        type={type}
-        name={name}
-        value={form[name]}
-        onChange={handleChange}
-        required={required}
-        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-          errors[name] ? "border-red-500 bg-red-50" : "border-slate-300"
-        }`}
-        {...props}
-      />
-      {errors[name] && (
-        <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
-          <AlertCircle size={14} />
-          <span>{errors[name]}</span>
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <form onSubmit={handleSubmit} className="space-y-5 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
       {/* Username */}
-      <InputField
-        label="Username"
-        name="username"
-        required
-        placeholder="Masukkan username"
-        autoComplete="username"
-      />
+      <div>
+        <label className="block mb-2 font-medium text-slate-700">
+          Username <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          value={form.username}
+          onChange={(e) => handleInputChange('username', e.target.value)}
+          required
+          disabled={isSubmitting}
+          placeholder="Masukkan username"
+          autoComplete="username"
+          className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-slate-100 disabled:cursor-not-allowed ${
+            errors.username ? "border-red-500 bg-red-50" : "border-slate-300"
+          }`}
+        />
+        {errors.username && (
+          <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+            <AlertCircle size={14} />
+            <span>{errors.username}</span>
+          </div>
+        )}
+      </div>
 
       {/* Email */}
-      <InputField
-        label="Email"
-        name="email"
-        type="email"
-        required
-        placeholder="user@example.com"
-        autoComplete="email"
-      />
+      <div>
+        <label className="block mb-2 font-medium text-slate-700">
+          Email <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="email"
+          value={form.email}
+          onChange={(e) => handleInputChange('email', e.target.value)}
+          required
+          disabled={isSubmitting}
+          placeholder="user@example.com"
+          autoComplete="email"
+          className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-slate-100 disabled:cursor-not-allowed ${
+            errors.email ? "border-red-500 bg-red-50" : "border-slate-300"
+          }`}
+        />
+        {errors.email && (
+          <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+            <AlertCircle size={14} />
+            <span>{errors.email}</span>
+          </div>
+        )}
+      </div>
 
-      {/* Password */}
+      {/* Password - TANPA VALIDASI RUMIT */}
       <div>
         <label className="block mb-2 font-medium text-slate-700">
           Password {!isEdit && <span className="text-red-500">*</span>}
           {isEdit && (
             <span className="text-slate-500 text-sm font-normal">
-              {" "}
-              (kosongkan jika tidak ingin mengubah)
+              {" "}(kosongkan jika tidak ingin mengubah)
             </span>
           )}
         </label>
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
-            name="password"
             value={form.password}
-            onChange={handleChange}
+            onChange={(e) => handleInputChange('password', e.target.value)}
             required={!isEdit}
-            placeholder={isEdit ? "Kosongkan jika tidak ingin mengubah" : "Minimal 8 karakter"}
+            disabled={isSubmitting}
+            placeholder={isEdit ? "Kosongkan jika tidak ingin mengubah" : "Masukkan password"}
             autoComplete="new-password"
-            className={`w-full px-4 py-2.5 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+            className={`w-full px-4 py-2.5 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-slate-100 disabled:cursor-not-allowed ${
               errors.password ? "border-red-500 bg-red-50" : "border-slate-300"
             }`}
           />
@@ -271,59 +198,16 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            tabIndex={-1}
           >
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
 
-        {/* Password Strength Indicator */}
-        {form.password && passwordStrength && (
-          <div className="mt-2">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-slate-600">Kekuatan Password:</span>
-              <span className={`text-sm font-medium text-${passwordStrength.color}-600`}>
-                {passwordStrength.text}
-              </span>
-            </div>
-            <div className="w-full bg-slate-200 rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all duration-300 bg-${passwordStrength.color}-500`}
-                style={{
-                  width:
-                    passwordStrength.level === "weak"
-                      ? "25%"
-                      : passwordStrength.level === "medium"
-                      ? "50%"
-                      : passwordStrength.level === "strong"
-                      ? "75%"
-                      : "100%",
-                }}
-              />
-            </div>
-          </div>
-        )}
-
         {errors.password && (
           <div className="flex items-center gap-1 mt-2 text-red-600 text-sm">
             <AlertCircle size={14} />
             <span>{errors.password}</span>
-          </div>
-        )}
-
-        {/* Password Requirements */}
-        {form.password && (
-          <div className="mt-3 p-3 bg-slate-50 rounded-lg">
-            <p className="text-xs font-medium text-slate-600 mb-2">Password harus mengandung:</p>
-            <div className="space-y-1">
-              <PasswordRequirement met={form.password.length >= 8} text="Minimal 8 karakter" />
-              <PasswordRequirement met={/[A-Z]/.test(form.password)} text="Huruf besar (A-Z)" />
-              <PasswordRequirement met={/[a-z]/.test(form.password)} text="Huruf kecil (a-z)" />
-              <PasswordRequirement met={/[0-9]/.test(form.password)} text="Angka (0-9)" />
-              <PasswordRequirement
-                met={/[!@#$%^&*(),.?":{}|<>]/.test(form.password)}
-                text="Karakter khusus (!@#$%...)"
-              />
-            </div>
           </div>
         )}
       </div>
@@ -337,10 +221,12 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
         
         {loadingRoles ? (
           <div className="p-4 bg-slate-50 rounded-lg text-center text-slate-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
             Memuat daftar role...
           </div>
         ) : roles.length === 0 ? (
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center text-yellow-700">
+            <AlertCircle className="w-8 h-8 mx-auto mb-2" />
             Tidak ada role tersedia. Hubungi administrator.
           </div>
         ) : (
@@ -348,13 +234,18 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
             {roles.map((role) => (
               <label
                 key={role.id}
-                className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-purple-300 transition-colors cursor-pointer"
+                className={`flex items-center gap-3 p-3 bg-white rounded-lg border transition-all cursor-pointer ${
+                  form.role_ids.includes(role.id)
+                    ? "border-purple-400 bg-purple-50"
+                    : "border-slate-200 hover:border-purple-300"
+                } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <input
                   type="checkbox"
                   checked={form.role_ids.includes(role.id)}
                   onChange={() => handleRoleChange(role.id)}
-                  className="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-2 focus:ring-purple-500"
+                  disabled={isSubmitting}
+                  className="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-2 focus:ring-purple-500 disabled:cursor-not-allowed"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -371,7 +262,7 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
         )}
         
         {form.role_ids.length === 0 && (
-          <p className="mt-2 text-sm text-slate-500 flex items-center gap-1">
+          <p className="mt-2 text-sm text-amber-600 flex items-center gap-1">
             <AlertCircle size={14} />
             Pilih minimal satu role untuk pengguna
           </p>
@@ -382,28 +273,27 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
       <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
         <input
           type="checkbox"
-          name="is_active"
-          id="is_active"
           checked={form.is_active}
-          onChange={handleChange}
-          className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+          onChange={(e) => handleInputChange('is_active', e.target.checked)}
+          disabled={isSubmitting}
+          className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed"
         />
-        <label htmlFor="is_active" className="flex items-center gap-2 font-medium text-slate-700 cursor-pointer">
+        <label className="flex items-center gap-2 font-medium text-slate-700 cursor-pointer">
           <span>Status Aktif</span>
           {form.is_active ? (
-            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Aktif</span>
+            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-semibold">Aktif</span>
           ) : (
-            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">Nonaktif</span>
+            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-semibold">Nonaktif</span>
           )}
         </label>
       </div>
 
       {/* Submit Buttons */}
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-3 pt-4 border-t border-slate-200">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="flex-1 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30"
         >
           {isSubmitting ? (
             <>
@@ -430,16 +320,4 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
   );
 };
 
-// Helper component for password requirements
-const PasswordRequirement = ({ met, text }) => (
-  <div className="flex items-center gap-2 text-xs">
-    {met ? (
-      <CheckCircle size={14} className="text-green-600" />
-    ) : (
-      <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300" />
-    )}
-    <span className={met ? "text-green-600 font-medium" : "text-slate-500"}>{text}</span>
-  </div>
-);
-
-export default UserForm;
+export default UserFormWithRoles;

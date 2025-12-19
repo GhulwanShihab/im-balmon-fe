@@ -24,7 +24,7 @@ const AdminLayout = () => {
     { icon: FileText, label: 'Laporan Penggunaan', path: '/admin/usage-reports' },
     { icon: Smartphone, label: 'Perubahan Kondisi', path: '/admin/condition-request' },
     { icon: RotateCcw, label: 'Pegawai', path: '/admin/employees' },
-    { icon: BarChart3, label: 'Statistik', path: '/admin/statistics' },
+    //{ icon: BarChart3, label: 'Statistik', path: '/admin/statistics' },
     { icon: Users, label: 'Pengguna', path: '/admin/users' },
   ];
 

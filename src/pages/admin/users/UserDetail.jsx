@@ -219,7 +219,7 @@ const UserDetail = () => {
             </div>
           </div>
 
-          {/* Account Status */}
+          {/* Account Status 
           {accountStatus && (
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
               <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -267,9 +267,9 @@ const UserDetail = () => {
                     })}
                   </p>
                 </div>
-              )}
+              )} 
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

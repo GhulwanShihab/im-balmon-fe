@@ -10,7 +10,7 @@ const apiClient = axios.create({
   },
 });
 
-// 🔥 NEW: Token management helpers
+// 🔥 Token management helpers
 const TokenManager = {
   getAccessToken: () => {
     return localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
@@ -50,10 +50,10 @@ const TokenManager = {
   
   isTokenExpiringSoon: () => {
     const expiresAt = TokenManager.getTokenExpiry();
-    if (!expiresAt) return true;
+    if (!expiresAt) return false; // ✅ FIX: Return false if no token
     
     const timeUntilExpiry = expiresAt - Date.now();
-    const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const fiveMinutes = 5 * 60 * 1000;
     
     return timeUntilExpiry < fiveMinutes;
   },
@@ -66,7 +66,7 @@ const TokenManager = {
   }
 };
 
-// 🔥 NEW: Refresh token logic
+// 🔥 Refresh token logic
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -90,6 +90,8 @@ const refreshAccessToken = async () => {
       throw new Error('No refresh token available');
     }
     
+    console.log('🔄 Attempting to refresh token...');
+    
     const response = await axios.post(
       `${API_CONFIG.BASE_URL}${API_CONFIG.API_VERSION}/auth/refresh`,
       { refresh_token: refreshToken },
@@ -105,65 +107,84 @@ const refreshAccessToken = async () => {
     // Update tokens
     TokenManager.setTokens(access_token, refresh_token, expires_in || 1800);
     
+    console.log('✅ Token refreshed successfully');
     return access_token;
   } catch (error) {
-    console.error('Token refresh failed:', error);
+    console.error('❌ Token refresh failed:', error);
     
     // Clear tokens and redirect to login
     TokenManager.clearTokens();
-    window.location.href = '/login';
+    
+    // Only redirect if not already on login page
+    if (!window.location.pathname.includes('/login')) {
+      window.location.href = '/login';
+    }
     
     throw error;
   }
 };
 
-// 🔥 NEW: Setup auto-refresh interval
+// 🔥 Setup auto-refresh interval
 const setupAutoRefresh = () => {
   // Clear existing interval if any
   if (window.tokenRefreshInterval) {
     clearInterval(window.tokenRefreshInterval);
   }
 
+  console.log('✅ Auto-refresh enabled');
+
   // Check every 1 minute
   window.tokenRefreshInterval = setInterval(async () => {
     const token = TokenManager.getAccessToken();
+    const refreshToken = TokenManager.getRefreshToken();
     
-    // Only refresh if user is logged in and token will expire soon
-    if (token && TokenManager.isTokenExpiringSoon() && !isRefreshing) {
+    // ✅ FIX: Only refresh if BOTH tokens exist and token expiring soon
+    if (token && refreshToken && TokenManager.isTokenExpiringSoon() && !isRefreshing) {
       console.log('🔄 Token akan expire, melakukan auto-refresh...');
       try {
         await refreshAccessToken();
         console.log('✅ Token berhasil di-refresh');
       } catch (error) {
         console.error('❌ Auto-refresh gagal:', error);
-        // Logout handled in refreshAccessToken
       }
     }
   }, 60000); // Check every 1 minute
 };
 
-// Initialize auto-refresh if user is logged in
-if (TokenManager.getAccessToken()) {
-  setupAutoRefresh();
-}
-
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   async (config) => {
-    // 🔥 NEW: Check if token needs refresh before request
-    if (TokenManager.isTokenExpiringSoon() && !isRefreshing) {
+    // ✅ FIX: Skip refresh check for login/register endpoints
+    const isAuthEndpoint = config.url?.includes('/auth/login') || 
+                          config.url?.includes('/auth/register') ||
+                          config.url?.includes('/auth/refresh');
+    
+    if (isAuthEndpoint) {
+      console.log('🔵 Auth endpoint, skipping token refresh check');
+      return config;
+    }
+    
+    // ✅ FIX: Only check refresh if BOTH tokens exist
+    const token = TokenManager.getAccessToken();
+    const refreshToken = TokenManager.getRefreshToken();
+    
+    if (token && refreshToken && TokenManager.isTokenExpiringSoon() && !isRefreshing) {
+      console.log('🔄 Token expiring soon, refreshing...');
       try {
-        await refreshAccessToken();
+        const newToken = await refreshAccessToken();
+        config.headers.Authorization = `Bearer ${newToken}`;
+        return config;
       } catch (error) {
-        // Will be handled by redirect in refreshAccessToken
+        console.error('❌ Failed to refresh token in interceptor');
         return Promise.reject(error);
       }
     }
     
-    const token = TokenManager.getAccessToken();
+    // Add token if exists
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
   (error) => {
@@ -179,7 +200,28 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // ✅ FIX: Don't retry auth endpoints
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                          originalRequest.url?.includes('/auth/register') ||
+                          originalRequest.url?.includes('/auth/refresh');
+    
+    if (isAuthEndpoint) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // ✅ FIX: Check if refresh token exists before attempting refresh
+      const refreshToken = TokenManager.getRefreshToken();
+      
+      if (!refreshToken) {
+        console.warn('⚠️ 401 error but no refresh token, redirecting to login');
+        TokenManager.clearTokens();
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
@@ -210,7 +252,6 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         processQueue(refreshError, null);
         
-        // Tokens cleared and redirected in refreshAccessToken
         return Promise.reject(refreshError);
       }
     }
@@ -219,6 +260,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-// 🔥 NEW: Export utilities
+// 🔥 Export utilities
 export { TokenManager, setupAutoRefresh };
 export default apiClient;

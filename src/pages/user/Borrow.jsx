@@ -161,7 +161,7 @@ const BorrowPage = () => {
       return;
     }
 
-    if (selectedDevices.find(d => d.id === device.id)) {
+    if (selectedDevices.some(d => getDeviceKey(d) === getDeviceKey(device))) {
       toast.error('Perangkat sudah dipilih');
       return;
     }
@@ -176,17 +176,17 @@ const BorrowPage = () => {
 
 
   const handleManualDeviceSelect = (device) => {
-    if (selectedDevices.find(d => d.id === device.id)) {
+    if (selectedDevices.some(d => getDeviceKey(d) === getDeviceKey(device))) {
       toast.error('Perangkat sudah dipilih');
       return;
     }
-    
-    setSelectedDevices(prev => [...prev, device]);
+   
+    setSelectedDevices(prev => [...prev, { ...device, __key: getDeviceKey(device) }]);
     toast.success(`Perangkat ${device.device_name} berhasil ditambahkan`);
   };
 
-  const removeSelectedDevice = (deviceId) => {
-    setSelectedDevices(prev => prev.filter(d => d.id !== deviceId));
+  const removeSelectedDevice = (deviceKey) => {
+    setSelectedDevices(prev => prev.filter(d => d.__key !== deviceKey));
   };
 
   const handleInputChange = (field) => (e) => {
@@ -260,6 +260,9 @@ const BorrowPage = () => {
     }));
   };
 
+  const getDeviceKey = (device) => {
+    return device.id + "_" + (device.device_code || "code");
+  };
 
   const getStatusBadge = (status) => {
     const normalized = (status || "").toUpperCase();
@@ -438,10 +441,10 @@ const BorrowPage = () => {
                             {status === "TERSEDIA" && (
                               <button
                                 onClick={() => handleManualDeviceSelect(device)}
-                                disabled={selectedDevices.some((d) => d.id === device.id)}
+                                disabled={selectedDevices.some(d => getDeviceKey(d) === getDeviceKey(device))}
                                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-1 px-3 rounded-lg text-xs"
                               >
-                                {selectedDevices.some((d) => d.id === device.id)
+                                {selectedDevices.some((d) => getDeviceKey(d) === getDeviceKey(device))
                                   ? "Terpilih"
                                   : "Pilih"}
                               </button>
@@ -455,7 +458,7 @@ const BorrowPage = () => {
                         <div className="bg-gray-50 border-t border-gray-200 px-3 sm:px-4 py-2">
                           {device.children.map((child) => {
                             const childStatus = (child.device_status || "").toUpperCase();
-                            const isSelected = selectedDevices.some((d) => d.id === child.id);
+                            const isSelected = selectedDevices.some(d => getDeviceKey(d) === getDeviceKey(child));
                             return (
                               <div
                                 key={child.id}
@@ -512,7 +515,7 @@ const BorrowPage = () => {
                       </div>
                     </div>
                     <button
-                      onClick={() => removeSelectedDevice(device.id)}
+                      onClick={() => removeSelectedDevice(device.__key)}
                       className="text-red-600 hover:text-red-800 p-1 flex-shrink-0 ml-2"
                     >
                       <Trash2 className="w-4 h-4" />

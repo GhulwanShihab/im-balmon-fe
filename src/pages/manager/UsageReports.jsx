@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 
 const ManagerUsageReports = () => {
+  const navigate = useNavigate();
   const [loanData, setLoanData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -385,7 +387,7 @@ const ManagerUsageReports = () => {
                       <td className="px-4 py-4">
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => window.location.href = `/manager/loans/${loan.id}`}
+                            onClick={() => navigate(`/manager/loans/${loan.id}`)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors"
                             title="Lihat Detail"
                           >

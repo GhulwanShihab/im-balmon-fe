@@ -63,10 +63,6 @@ const UserLayout = () => {
           </div>
 
           <div className="flex items-center space-x-1">
-            <button className="p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 relative">
-              <Bell className="w-5 h-5" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            </button>
             <button 
               onClick={handleLogout}
               className="p-2 rounded-xl text-gray-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 transform hover:scale-105"
@@ -186,9 +182,11 @@ const UserLayout = () => {
             })}
           </div>
           <div className="flex items-center space-x-3">
-            <button className="p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 relative">
-              <Bell className="w-5 h-5" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <button 
+              onClick={handleLogout}
+              className="p-2 rounded-xl text-gray-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 transform hover:scale-105"
+            >
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
         </div>

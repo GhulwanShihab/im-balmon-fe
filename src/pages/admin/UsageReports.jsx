@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   FileText, 
   Download, 
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 
 const UsageReports = () => {
+  const navigate = useNavigate();
   const [loanData, setLoanData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -383,7 +385,7 @@ const UsageReports = () => {
 
   const handleViewDetail = (loanId) => {
     // Navigate ke detail page atau buka modal
-    window.location.href = `/loans/${loanId}`;
+    navigate(`/admin/loans/${loanId}`);
   };
 
   const StatCard = ({ icon: Icon, title, value, subtitle, color = 'blue' }) => {

@@ -42,8 +42,14 @@ export const getUserWithRoles = async (id) => {
     const response = await apiClient.get(`${USER_ENDPOINT}/${id}/roles`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching user ${id} with roles:`, error);
-    throw error;
+    // Jika error 401 atau 403, throw ulang untuk di-handle oleh interceptor
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw error;
+    }
+    
+    // Untuk error lain (404, 500, dll), skip dan return empty roles
+    console.warn(`Skip roles for user ${id}:`, error.response?.status || error.message);
+    return { roles: [] };
   }
 };
 

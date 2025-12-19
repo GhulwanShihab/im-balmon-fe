@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UserCheck, UserX, Eye, Mail, Calendar } from 'lucide-react';
-import apiClient from '../../../services/api';
+import apiClient from '../../services/api';
 import toast from 'react-hot-toast';
 
 const ManagerUserApprovals = () => {

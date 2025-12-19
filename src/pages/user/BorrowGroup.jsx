@@ -132,7 +132,7 @@ const BorrowGroupPage = () => {
       {/* Header with Back Button */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => navigate('/user/device-groups')}
+          onClick={() => navigate('/user/device-group')}
           className="text-gray-600 hover:text-gray-900"
         >
           <ChevronLeft className="w-6 h-6" />
@@ -187,7 +187,7 @@ const BorrowGroupPage = () => {
               Perangkat berikut tidak tersedia: {groupDetail.unavailable_devices?.join(', ')}
             </p>
             <button
-              onClick={() => navigate('/user/device-groups')}
+              onClick={() => navigate('/user/device-group')}
               className="mt-3 text-sm text-red-600 hover:text-red-800 font-medium"
             >
               ← Kembali ke Daftar Grup
@@ -384,7 +384,7 @@ const BorrowGroupPage = () => {
           {/* Actions */}
           <div className="flex gap-4 mt-6">
             <button
-              onClick={() => navigate('/user/device-groups')}
+              onClick={() => navigate('/user/device-group')}
               className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-colors"
             >
               Batal

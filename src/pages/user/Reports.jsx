@@ -23,6 +23,7 @@ const ReportsPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [exportingId, setExportingId] = useState(null); // Added for loading state
   const [filters, setFilters] = useState({
     status: "",
     activity_name: "",
@@ -48,7 +49,7 @@ const ReportsPage = () => {
   const fetchLoans = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
       const params = {
         page: currentPage,
         page_size: 10,
@@ -74,7 +75,7 @@ const ReportsPage = () => {
 
   const fetchStats = async () => {
     try {
-      const token = sessionStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
       const response = await axios.get("/api/v1/loans/my-loans", {
         headers: { Authorization: `Bearer ${token}` },
         params: { page_size: 100 },
@@ -96,7 +97,7 @@ const ReportsPage = () => {
 
   const fetchLoanDetail = async (loanId) => {
     try {
-      const token = sessionStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
       const response = await axios.get(`/api/v1/loans/${loanId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -108,26 +109,99 @@ const ReportsPage = () => {
     }
   };
 
-  // Export per laporan
-  const exportToPDF = async (loanId) => {
+  /**
+   * ✨ FIXED: Export PDF function - sesuai dengan implementasi admin
+   * Menggunakan endpoint /api/v1/loans/:id/export-pdf yang benar
+   */
+  const exportToPDF = async (loanId, loanNumber) => {
     try {
-      const token = sessionStorage.getItem("token");
-      const response = await axios.get(`/api/v1/export/loan/${loanId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
+      setExportingId(loanId);
+      console.log(`📄 Starting PDF export for loan ID: ${loanId}`);
+      
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+      
+      if (!token) {
+        toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+        window.location.href = '/login';
+        return;
+      }
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Loading toast
+      const loadingToast = toast.loading("Mengunduh PDF...");
+
+      // Call the correct endpoint - FIXED: gunakan /export-pdf bukan /export
+      const response = await axios.get(
+        `/api/v1/loans/${loanId}/export-pdf`,
+        {
+          headers: { 
+            Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`
+          },
+          responseType: "blob",
+        }
+      );
+
+      console.log('PDF Export response status:', response.status);
+
+      // Handle unauthorized
+      if (response.status === 401) {
+        toast.dismiss(loadingToast);
+        toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+        sessionStorage.removeItem("token");
+        localStorage.removeItem("token");
+        window.location.href = '/login';
+        return;
+      }
+
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      console.log('Blob size:', blob.size, 'bytes');
+      
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `laporan-peminjaman-${loanId}.pdf`);
+      
+      // Generate filename with timestamp - sama seperti admin
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `Berita_Acara_${loanNumber || loanId}_${timestamp}.pdf`;
+      link.setAttribute("download", filename);
+      
+      // Trigger download
       document.body.appendChild(link);
       link.click();
+      
+      // Cleanup
       link.remove();
+      window.URL.revokeObjectURL(url);
 
-      toast.success("Laporan berhasil diunduh");
+      console.log('✅ PDF downloaded successfully:', filename);
+      
+      toast.dismiss(loadingToast);
+      toast.success(`Berita Acara berhasil diunduh: ${filename}`);
+      
     } catch (error) {
-      toast.error("Gagal mengunduh laporan");
+      console.error("❌ Error exporting PDF:", error);
+      
+      // Handle different error types with proper messages
+      if (error.response) {
+        if (error.response.status === 401) {
+          toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+          sessionStorage.removeItem("token");
+          localStorage.removeItem("token");
+          window.location.href = '/login';
+        } else if (error.response.status === 404) {
+          toast.error("Data peminjaman tidak ditemukan.");
+        } else if (error.response.status === 403) {
+          toast.error("Anda tidak memiliki akses untuk export data ini.");
+        } else {
+          // Try to parse error message
+          const errorMessage = error.response.data?.detail || "Gagal mengunduh laporan. Silakan coba lagi.";
+          toast.error(errorMessage);
+        }
+      } else {
+        toast.error("Terjadi kesalahan saat export PDF. Silakan coba lagi.");
+      }
+    } finally {
+      setExportingId(null);
     }
   };
 
@@ -247,48 +321,97 @@ const ReportsPage = () => {
               </div>
             </div>
 
-            {/* Device Info */}
+            {/* Device Info - List all borrowed devices */}
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-3">
-                Informasi Perangkat
+                Perangkat Yang Dipinjam
               </h3>
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Nama Perangkat
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedLoan.device?.device_name || selectedLoan.device_name || '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Kode Perangkat
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedLoan.device?.device_code || '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      NUP
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedLoan.device?.nup_device || '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Brand
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedLoan.device?.bmn_brand ||
-                        selectedLoan.device?.sample_brand ||
-                        "-"}
-                    </p>
-                  </div>
-                </div>
+              <div className="bg-gray-50 p-4 rounded-xl space-y-3">
+                {selectedLoan.loan_items && selectedLoan.loan_items.length > 0 ? (
+                  selectedLoan.loan_items.map((item, index) => {
+                    const deviceInfo = item.child_device || item.device;
+                    return (
+                      <div key={index} className="bg-white p-3 rounded-lg border border-gray-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500">
+                              Nama Perangkat
+                            </label>
+                            <p className="text-sm text-gray-900 mt-1 font-medium">
+                              {deviceInfo?.device_name || '-'}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500">
+                              Kode Perangkat
+                            </label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {deviceInfo?.device_code || '-'}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500">
+                              NUP
+                            </label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {deviceInfo?.nup_device || '-'}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500">
+                              Brand
+                            </label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {deviceInfo?.bmn_brand || deviceInfo?.sample_brand || '-'}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500">
+                              Kondisi Awal
+                            </label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {item.condition_before === "BAIK"
+                                ? "Baik"
+                                : item.condition_before === "RUSAK_RINGAN"
+                                ? "Rusak Ringan"
+                                : item.condition_before === "RUSAK_BERAT"
+                                ? "Rusak Berat"
+                                : "-"}
+                            </p>
+                          </div>
+                          {selectedLoan.status?.toUpperCase() === "RETURNED" && item.condition_after && (
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500">
+                                Kondisi Saat Dikembalikan
+                              </label>
+                              <p className="text-sm text-gray-900 mt-1">
+                                {item.condition_after === "BAIK"
+                                  ? "Baik"
+                                  : item.condition_after === "RUSAK_RINGAN"
+                                  ? "Rusak Ringan"
+                                  : item.condition_after === "RUSAK_BERAT"
+                                  ? "Rusak Berat"
+                                  : "-"}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        {item.condition_notes && (
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <label className="block text-xs font-medium text-gray-500">
+                              Catatan Kondisi
+                            </label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {item.condition_notes}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-gray-500">Tidak ada data perangkat</p>
+                )}
               </div>
             </div>
 
@@ -336,37 +459,67 @@ const ReportsPage = () => {
               </div>
             </div>
 
-            {/* Return Info */}
-            {selectedLoan.status?.toUpperCase() === "RETURNED" && (
+            {/* Return Info - Updated to show per-device condition */}
+            {selectedLoan.status?.toUpperCase() === "RETURNED" && selectedLoan.loan_items && selectedLoan.loan_items.length > 0 && (
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-3">
                   Informasi Pengembalian
                 </h3>
-                <div className="bg-green-50 p-4 rounded-xl">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Kondisi Saat Dikembalikan
+                <div className="bg-green-50 p-4 rounded-xl space-y-3">
+                  {selectedLoan.loan_items.map((item, index) => {
+                    const deviceInfo = item.child_device || item.device;
+                    if (!item.condition_after) return null;
+                    
+                    return (
+                      <div key={index} className="bg-white p-3 rounded-lg border border-green-200">
+                        <div className="flex items-start space-x-3">
+                          <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {deviceInfo?.device_name || '-'}
+                            </p>
+                            <div className="grid grid-cols-2 gap-4 mt-2">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500">
+                                  Kondisi Saat Dikembalikan
+                                </label>
+                                <p className="text-sm text-gray-900 mt-1">
+                                  {item.condition_after === "BAIK"
+                                    ? "Baik"
+                                    : item.condition_after === "RUSAK_RINGAN"
+                                    ? "Rusak Ringan"
+                                    : item.condition_after === "RUSAK_BERAT"
+                                    ? "Rusak Berat"
+                                    : "-"}
+                                </p>
+                              </div>
+                              {item.condition_notes && (
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-500">
+                                    Catatan
+                                  </label>
+                                  <p className="text-sm text-gray-900 mt-1">
+                                    {item.condition_notes}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }).filter(Boolean)}
+                  
+                  {selectedLoan.return_notes && (
+                    <div className="bg-white p-3 rounded-lg border border-green-200 mt-2">
+                      <label className="block text-xs font-medium text-gray-500">
+                        Catatan Pengembalian Umum
                       </label>
                       <p className="text-sm text-gray-900 mt-1">
-                        {selectedLoan.device_condition_on_return === "BAIK"
-                          ? "Baik"
-                          : selectedLoan.device_condition_on_return === "RUSAK_RINGAN"
-                          ? "Rusak Ringan"
-                          : selectedLoan.device_condition_on_return === "RUSAK_BERAT"
-                          ? "Rusak Berat"
-                          : "-"}
+                        {selectedLoan.return_notes}
                       </p>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Catatan Pengembalian
-                      </label>
-                      <p className="text-sm text-gray-900 mt-1">
-                        {selectedLoan.return_notes || "-"}
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
@@ -386,11 +539,21 @@ const ReportsPage = () => {
 
           <div className="p-6 border-t border-gray-200 flex justify-between space-x-2">
             <button
-              onClick={() => exportToPDF(selectedLoan.id)}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors"
+              onClick={() => exportToPDF(selectedLoan.id, selectedLoan.loan_number)}
+              disabled={exportingId === selectedLoan.id}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Download className="w-4 h-4 inline-block mr-2" />
-              Export PDF
+              {exportingId === selectedLoan.id ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2" />
+                  Mengunduh...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 inline-block mr-2" />
+                  Export PDF
+                </>
+              )}
             </button>
             <button
               onClick={() => {
@@ -555,8 +718,23 @@ const ReportsPage = () => {
                         {loan.assignment_letter_number}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {loan.device?.device_name || loan.device_name || '-'}
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {loan.loan_items && loan.loan_items.length > 0 ? (
+                        <div className="space-y-1">
+                          {loan.loan_items.slice(0, 2).map((item, idx) => (
+                            <div key={idx} className="text-xs">
+                              {item.child_device?.device_name || item.device?.device_name || '-'}
+                            </div>
+                          ))}
+                          {loan.loan_items.length > 2 && (
+                            <div className="text-xs text-gray-500">
+                              +{loan.loan_items.length - 2} perangkat lainnya
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatDate(loan.loan_start_date)} -{" "}
@@ -573,10 +751,20 @@ const ReportsPage = () => {
                         <Eye className="w-4 h-4 mr-1" /> Detail
                       </button>
                       <button
-                        onClick={() => exportToPDF(loan.id)}
-                        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs transition-colors inline-flex items-center"
+                        onClick={() => exportToPDF(loan.id, loan.loan_number)}
+                        disabled={exportingId === loan.id}
+                        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs transition-colors inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Download className="w-4 h-4 mr-1" /> PDF
+                        {exportingId === loan.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1" />
+                            Downloading...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4 mr-1" /> PDF
+                          </>
+                        )}
                       </button>
                     </td>
                   </tr>

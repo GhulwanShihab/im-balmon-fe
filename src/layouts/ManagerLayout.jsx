@@ -27,7 +27,7 @@ const ManagerLayout = () => {
     { icon: FileText, label: 'Laporan Penggunaan', path: '/manager/usage-reports' },
     { icon: CheckCircle, label: 'Persetujuan Kondisi', path: '/manager/condition-approvals' },
     { icon: RotateCcw, label: 'Data Pegawai', path: '/manager/employees' },
-    { icon: BarChart3, label: 'Statistik', path: '/manager/statistics' },
+    //{ icon: BarChart3, label: 'Statistik', path: '/manager/statistics' },
     { icon: UserCheck, label: 'Persetujuan User', path: '/manager/user-approvals' },
     { icon: Users, label: 'Daftar Pengguna', path: '/manager/users' },
   ];
