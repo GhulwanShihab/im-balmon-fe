@@ -20,7 +20,7 @@ const UsageReports = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [exportingId, setExportingId] = useState(null);
-  const [conditionRequests, setConditionRequests] = useState([]);
+  
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [currentRequestPage, setCurrentRequestPage] = useState(1);
   const [summary, setSummary] = useState({
@@ -37,7 +37,7 @@ const UsageReports = () => {
     sort_by: 'loan_start_date',
     sort_order: 'desc'
   });
-  const [showDebug, setShowDebug] = useState(false);
+  //const [showDebug, setShowDebug] = useState(false);
 
   // Debug: Test API connection
   const testApiConnection = async () => {
@@ -77,39 +77,6 @@ const UsageReports = () => {
     }
     console.log('=== END TEST ===');
   };
-
-  const fetchConditionRequests = async () => {
-    try {
-      setLoadingRequests(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      const response = await fetch(
-        'http://localhost:8000/api/v1/devices/condition-change-requests',
-        {
-          method: 'GET',
-          headers: headers
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setConditionRequests(data || []);
-      } else {
-        console.error('Gagal memuat permintaan kondisi');
-        setConditionRequests([]);
-      }
-    } catch (error) {
-      console.error('Error fetching condition requests:', error);
-      setConditionRequests([]);
-    } finally {
-      setLoadingRequests(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchConditionRequests();
-  }, [currentRequestPage]);
 
   useEffect(() => {
     fetchLoanData();
@@ -414,50 +381,6 @@ const UsageReports = () => {
     );
   };
 
-  const handleApproveRequest = async (requestId) => {
-    try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-    
-      const response = await fetch(`http://localhost:8000/api/v1/devices/condition-change-requests/${requestId}/approve`, {
-        method: 'POST',
-        headers: headers
-      });
-    
-      if (response.ok) {
-        alert('Permintaan berhasil disetujui');
-        setConditionRequests(prev => prev.filter(r => r.id !== requestId));
-        fetchLoanData(); // refresh loan table agar kondisi device update
-      } else {
-        alert('Gagal menyetujui permintaan');
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Error saat approve');
-    }
-  };
-  
-  const handleRejectRequest = async (requestId) => {
-    try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-    
-      const response = await fetch(`http://localhost:8000/api/v1/devices/condition-change-requests/${requestId}/reject`, {
-        method: 'POST',
-        headers: headers
-      });
-    
-      if (response.ok) {
-        alert('Permintaan ditolak');
-        setConditionRequests(prev => prev.filter(r => r.id !== requestId));
-      } else {
-        alert('Gagal menolak permintaan');
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Error saat reject');
-    }
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -497,17 +420,9 @@ const UsageReports = () => {
           <h1 className="text-2xl font-bold text-gray-900">Laporan Peminjaman</h1>
           <p className="text-gray-600 mt-1">Statistik dan data peminjaman perangkat</p>
         </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setShowDebug(!showDebug)}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
-          >
-            {showDebug ? 'Hide Debug' : 'Show Debug'}
-          </button>
-        </div>
       </div>
 
-      {/* Debug Panel */}
+      {/* Debug Panel 
       {showDebug && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <h3 className="font-bold text-yellow-900 mb-2">Debug Panel</h3>
@@ -543,7 +458,7 @@ const UsageReports = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -575,61 +490,6 @@ const UsageReports = () => {
           subtitle={summary.most_loaned_device ? `${summary.most_loaned_device.loan_count} kali` : 'Tidak ada data'}
           color="purple"
         />
-      </div>
-
-      {/* Section Permintaan Perubahan Kondisi */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mt-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Permintaan Perubahan Kondisi Device</h2>
-
-        {loadingRequests ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : conditionRequests.length === 0 ? (
-          <p className="text-gray-500">Tidak ada permintaan perubahan kondisi.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left">Perangkat</th>
-                  <th className="px-4 py-2 text-left">Kondisi Sebelumnya</th>
-                  <th className="px-4 py-2 text-left">Kondisi Yang Diubah</th>
-                  <th className="px-4 py-2 text-left">Pengguna</th>
-                  <th className="px-4 py-2 text-left">Status</th>
-                  <th className="px-4 py-2 text-left">Tanggal Pengajuan</th>
-                  <th className="px-4 py-2 text-left">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {conditionRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2">{req.device_name}</td>
-                    <td className="px-4 py-2">{req.old_condition}</td>
-                    <td className="px-4 py-2 font-semibold">{req.new_condition}</td>
-                    <td className="px-4 py-2">{req.requested_by_name}</td>
-                    <td className="px-4 py-2">{req.status}</td>
-                    <td className="px-4 py-2">{new Date(req.requested_at).toLocaleDateString('id-ID')}</td>
-                    <td className="px-4 py-2 flex space-x-2">
-                      <button
-                        onClick={() => handleApproveRequest(req.id)}
-                        className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleRejectRequest(req.id)}
-                        className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs"
-                      >
-                        Reject
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
 
       {/* Filters */}

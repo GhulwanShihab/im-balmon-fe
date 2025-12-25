@@ -48,18 +48,31 @@ const UserTable = ({ users, onDelete, loading }) => {
               <td className="p-3">{u.first_name} {u.last_name}</td>
               <td className="p-3">{u.email}</td>
               <td className="p-3">
-                <select
-                  value={u.roles?.[0]?.id || ""}
-                  onChange={(e) => handleChangeRole(u.id, e.target.value)}
-                  className="border rounded p-1"
-                >
-                  <option value="">-- Pilih Role --</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2">
+                  {/* Display current role name */}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    u.role_names?.[0] === 'admin' 
+                      ? 'bg-red-100 text-red-800' 
+                      : u.role_names?.[0] === 'manager' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-green-100 text-green-800'
+                  }`}>
+                    {u.role_names?.[0] || 'No Role'}
+                  </span>
+                  {/* Select for changing role */}
+                  <select
+                    value={roles.find(r => r.name === u.role_names?.[0])?.id || ""}
+                    onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                    className="border rounded p-1 text-xs"
+                  >
+                    <option value="">Ubah</option>
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </td>
               <td className="p-3 text-center space-x-2">
                 <Link

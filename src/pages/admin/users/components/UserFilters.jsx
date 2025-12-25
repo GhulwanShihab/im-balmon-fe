@@ -1,4 +1,21 @@
+import { useEffect, useState } from "react";
+import { getRoles } from "../services/userService";
+
 const UserFilters = ({ filters, setFilters }) => {
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const data = await getRoles();
+        setRoles(data);
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+      }
+    };
+    fetchRoles();
+  }, []);
+
   return (
     <div className="flex flex-wrap gap-4 items-end bg-white p-4 rounded-xl shadow-md">
       <div>
@@ -15,13 +32,29 @@ const UserFilters = ({ filters, setFilters }) => {
       <div>
         <label className="block text-sm font-medium">Role</label>
         <select
-          value={filters.role}
-          onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+          value={filters.role_id || ""}
+          onChange={(e) => setFilters({ ...filters, role_id: e.target.value ? parseInt(e.target.value) : "" })}
           className="border rounded-lg p-2"
         >
-          <option value="">Semua</option>
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
+          <option value="">Semua Role</option>
+          {roles.map((role) => (
+            <option key={role.id} value={role.id}>
+              {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Status</label>
+        <select
+          value={filters.is_active ?? ""}
+          onChange={(e) => setFilters({ ...filters, is_active: e.target.value === "" ? "" : e.target.value === "true" })}
+          className="border rounded-lg p-2"
+        >
+          <option value="">Semua Status</option>
+          <option value="true">Aktif</option>
+          <option value="false">Nonaktif</option>
         </select>
       </div>
     </div>

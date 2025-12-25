@@ -39,7 +39,7 @@ const AdminUserManagement = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [filters, setFilters] = useState({ search: "", is_active: "", role: "" });
+  const [filters, setFilters] = useState({ search: "", is_active: "", role_id: "" });
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, total_pages: 1, page: 1 });
   const [stats, setStats] = useState({
@@ -56,10 +56,16 @@ const AdminUserManagement = () => {
 
   // Tambahkan ref untuk mencegah multiple fetch
   const isFetchingRef = useRef(false);
-  const mountedRef = useRef(false);
+  const isFetchingUsersRef = useRef(false);
+  const isFetchingRolesRef = useRef(false);
+  const mountedRef = useRef(true); // Set true immediately
 
   // Fetch all users dengan protection
   const fetchUsers = async (showLoader = true) => {
+    // Prevent duplicate requests
+    if (isFetchingUsersRef.current) return;
+    isFetchingUsersRef.current = true;
+    
     if (showLoader) setLoading(true);
     try {
       const params = {
@@ -70,8 +76,8 @@ const AdminUserManagement = () => {
       };
 
       if (filters.search) params.email = filters.search;
-      if (filters.is_active !== "") params.is_active = filters.is_active === "true";
-      if (filters.role) params.role = filters.role;
+      if (filters.is_active !== "" && filters.is_active !== undefined) params.is_active = filters.is_active;
+      if (filters.role_id) params.role_id = filters.role_id;
 
       const cleanParams = Object.fromEntries(
         Object.entries(params).filter(([, v]) => v !== "" && v !== null && v !== undefined)
@@ -79,18 +85,22 @@ const AdminUserManagement = () => {
 
       const data = await getUsers(cleanParams);
 
-      // Langsung set users tanpa fetch roles
-      setUsers(Array.isArray(data.users) ? data.users : []);
-      setMeta({
-        total: data.total || 0,
-        total_pages: data.total_pages || 1,
-        page: data.page || 1,
-      });
+      if (mountedRef.current) {
+        setUsers(Array.isArray(data.users) ? data.users : []);
+        setMeta({
+          total: data.total || 0,
+          total_pages: data.total_pages || 1,
+          page: data.page || 1,
+        });
+      }
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast.error(error.response?.data?.detail || "Gagal memuat data pengguna");
+      if (mountedRef.current && error.response?.status !== 401) {
+        toast.error(error.response?.data?.detail || "Gagal memuat data pengguna");
+      }
     } finally {
-      if (showLoader) setLoading(false);
+      isFetchingUsersRef.current = false;
+      if (showLoader && mountedRef.current) setLoading(false);
     }
   };
 
@@ -129,20 +139,23 @@ const AdminUserManagement = () => {
     }
   };
 
-  // Fetch roles
-  //const fetchRoles = async () => {
-    //try {
-      //const data = await getRoles();
-      //if (mountedRef.current) {
-        //setRoles(Array.isArray(data) ? data : []);
-      //}
-    //} catch (error) {
-      //console.error("Error fetching roles:", error);
-      //if (error.response?.status !== 401 && mountedRef.current) {
-        //toast.error("Gagal memuat data roles");
-      //}
-    //}
-  //};
+  // Fetch roles with protection
+  const fetchRoles = async () => {
+    // Prevent duplicate requests
+    if (isFetchingRolesRef.current) return;
+    isFetchingRolesRef.current = true;
+    
+    try {
+      const data = await getRoles();
+      if (mountedRef.current) {
+        setRoles(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+    } finally {
+      isFetchingRolesRef.current = false;
+    }
+  };
 
   // Fetch stats
   const fetchStats = async () => {
@@ -279,7 +292,7 @@ const AdminUserManagement = () => {
   // Initial load
   useEffect(() => {
     if (mountedRef.current) {
-      //fetchRoles();
+      fetchRoles();
       fetchStats();
     }
   }, []);
@@ -310,7 +323,7 @@ const AdminUserManagement = () => {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [filters.search, filters.is_active, filters.role]);
+  }, [filters.search, filters.is_active, filters.role_id]);
 
   const pendingCount = stats.pending_users || 0;
 
@@ -428,14 +441,14 @@ const AdminUserManagement = () => {
                   <option value="false">Nonaktif</option>
                 </select>
                 <select
-                  value={filters.role}
-                  onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+                  value={filters.role_id}
+                  onChange={(e) => setFilters({ ...filters, role_id: e.target.value ? parseInt(e.target.value) : "" })}
                   className="px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Semua Role</option>
                   {roles.map((role) => (
-                    <option key={role.id} value={role.name}>
-                      {role.name}
+                    <option key={role.id} value={role.id}>
+                      {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -605,10 +618,27 @@ const UsersTable = ({ users, roles, onRoleChange, onDelete, onUnlock }) => {
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-4 text-slate-600 hidden md:table-cell">
-                  {user.roles?.length > 0
-                    ? user.roles.map(r => r.name).join(", ") 
-                    : "-"}
+                <td className="py-4 px-4 hidden lg:table-cell">
+                  {user.role_names?.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {user.role_names.map((roleName, index) => (
+                        <span
+                          key={index}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            roleName === 'admin'
+                              ? 'bg-red-100 text-red-700'
+                              : roleName === 'manager'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          {roleName}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-slate-400">-</span>
+                  )}
                 </td>
                 <td className="py-4 px-4">
                   <div className="flex items-center justify-center gap-1 md:gap-2">

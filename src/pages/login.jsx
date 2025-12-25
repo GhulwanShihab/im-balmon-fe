@@ -278,7 +278,7 @@ const LoginPage = () => {
                 </div>
               </div>
 
-              {/* Remember Me */}
+              {/* Remember Me 
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -290,7 +290,7 @@ const LoginPage = () => {
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 cursor-pointer">
                   Ingat saya
                 </label>
-              </div>
+              </div> */}
 
               {/* Tombol Login */}
               <button

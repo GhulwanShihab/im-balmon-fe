@@ -161,7 +161,7 @@ const UserDetail = () => {
             <div className="space-y-4">
               <InfoRow icon={<User size={18} />} label="Username" value={user.username} />
               <InfoRow icon={<Mail size={18} />} label="Email" value={user.email} />
-              <InfoRow
+              {/*<InfoRow
                 icon={<Calendar size={18} />}
                 label="Tanggal Dibuat"
                 value={new Date(user.created_at).toLocaleString("id-ID", {
@@ -171,7 +171,7 @@ const UserDetail = () => {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-              />
+              />*/}
               {user.last_login && (
                 <InfoRow
                   icon={<Activity size={18} />}
