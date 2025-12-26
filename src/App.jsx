@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { TokenManager, setupAutoRefresh } from './services/api'; // 🔥 Import new utilities
+import API_CONFIG from './config/api'; // 🔥 Import API config
 
 // Layouts
 import AdminLayout from './layouts/AdminLayout';
@@ -65,8 +66,8 @@ import Registrasi from './pages/registrasi';
 //import RiwayatPerangkat from './pages/riwayatperangkat';
 //import AdminInfo from './pages/AdminInfo';
 
-// Configure axios defaults
-axios.defaults.baseURL = 'http://localhost:8000';
+// Configure axios defaults - using API_CONFIG (reads from env variable)
+axios.defaults.baseURL = API_CONFIG.BASE_URL;
 
 // Protected Route Component with auto-refresh
 const ProtectedRoute = ({ children }) => {
