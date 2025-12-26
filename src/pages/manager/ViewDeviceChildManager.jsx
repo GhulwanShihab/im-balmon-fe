@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Eye, QrCode } from 'lucide-react';
 import apiClient from '../../services/api';
+import { getMediaUrl } from '../../config/api';
 import QRCodeGenerator from '../../components/QRCodeGenerator';
 
 const ViewDeviceChildManager = () => {
@@ -255,12 +256,12 @@ const ViewDeviceChildManager = () => {
             {deviceChild.photos_url.map((url, i) => (
               <div key={i} className="relative group">
                 <img
-                  src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${url}`}
+                  src={getMediaUrl(url)}
                   alt={`child-photo-${i}`}
                   className="w-full h-32 object-cover rounded-lg border border-gray-200 shadow-sm"
                 />
                 <a
-                  href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${url}`}
+                  href={getMediaUrl(url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"

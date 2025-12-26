@@ -57,20 +57,12 @@ const ViewLoanDetail = () => {
   const handleExportPDF = async () => {
     try {
       setExportingPDF(true);
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) return alert('Sesi berakhir, silakan login kembali');
 
-      const response = await fetch(
-        `http://localhost:8000/api/v1/loans/${id}/export-pdf`,
-        {
-          headers: {
-            Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`
-          }
-        }
-      );
+      const response = await apiClient.get(`/loans/${id}/export-pdf`, {
+        responseType: 'blob'
+      });
 
-      if (!response.ok) throw new Error();
-      const blob = await response.blob();
+      const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
 

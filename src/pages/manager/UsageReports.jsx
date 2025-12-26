@@ -11,6 +11,7 @@ import {
   Eye,
   FileDown
 } from 'lucide-react';
+import apiClient from '../../services/api';
 
 const ManagerUsageReports = () => {
   const navigate = useNavigate();
@@ -43,59 +44,24 @@ const ManagerUsageReports = () => {
     fetchSummary();
   }, []);
 
-  const getAuthHeaders = () => {
-    let token = localStorage.getItem('token');
-    if (!token) {
-      token = sessionStorage.getItem('token');
-    }
-    
-    if (!token) {
-      alert('Sesi Anda telah berakhir. Silakan login kembali.');
-      window.location.href = '/login';
-      return null;
-    }
-    
-    const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-    return {
-      'Authorization': authToken,
-      'Content-Type': 'application/json'
-    };
-  };
-
   const fetchLoanData = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
 
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        page_size: '10',
-      });
+      const params = {
+        page: currentPage,
+        page_size: 10,
+      };
 
-      if (filters.borrower_name) params.append('borrower_name', filters.borrower_name);
-      if (filters.assignment_letter_number) params.append('assignment_letter_number', filters.assignment_letter_number);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.sort_by) params.append('sort_by', filters.sort_by);
-      if (filters.sort_order) params.append('sort_order', filters.sort_order);
+      if (filters.borrower_name) params.borrower_name = filters.borrower_name;
+      if (filters.assignment_letter_number) params.assignment_letter_number = filters.assignment_letter_number;
+      if (filters.status) params.status = filters.status;
+      if (filters.sort_by) params.sort_by = filters.sort_by;
+      if (filters.sort_order) params.sort_order = filters.sort_order;
 
-      const response = await fetch(`http://localhost:8000/api/v1/loans?${params}`, {
-        method: 'GET',
-        headers: headers
-      });
+      const response = await apiClient.get('/loans', { params });
+      const data = response.data;
 
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        sessionStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       setLoanData(data.loans || []);
       setTotal(data.total || 0);
       setTotalPages(data.total_pages || 1);
@@ -110,23 +76,15 @@ const ManagerUsageReports = () => {
 
   const fetchSummary = async () => {
     try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      const response = await fetch('http://localhost:8000/api/v1/loans/stats', {
-        method: 'GET',
-        headers: headers
+      const response = await apiClient.get('/loans/stats');
+      const data = response.data;
+      
+      setSummary({
+        total_loans: data.total_loans || 0,
+        total_active: data.active_loans || 0,
+        total_returned: data.returned_loans || 0,
+        most_loaned_device: data.most_borrowed_device || null
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSummary({
-          total_loans: data.total_loans || 0,
-          total_active: data.active_loans || 0,
-          total_returned: data.returned_loans || 0,
-          most_loaned_device: data.most_borrowed_device || null
-        });
-      }
     } catch (error) {
       console.error('Error fetching summary:', error);
     }
@@ -135,49 +93,27 @@ const ManagerUsageReports = () => {
   const handleExportPDF = async (loanId, loanNumber) => {
     try {
       setExportingId(loanId);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      const response = await fetch(
-        `http://localhost:8000/api/v1/loans/${loanId}/export-pdf`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': headers.Authorization
-          }
-        }
-      );
       
-      if (response.status === 401) {
-        alert('Sesi Anda telah berakhir. Silakan login kembali.');
-        localStorage.removeItem('token');
-        sessionStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        const timestamp = new Date().toISOString().split('T')[0];
-        const filename = `Berita_Acara_${loanNumber}_${timestamp}.pdf`;
-        link.setAttribute('download', filename);
-        
-        document.body.appendChild(link);
-        link.click();
-        
-        link.remove();
-        window.URL.revokeObjectURL(url);
-        
-        alert(`Berita Acara berhasil diunduh: ${filename}`);
-      } else {
-        const errorText = await response.text();
-        console.error('Export error:', errorText);
-        alert('Gagal export PDF. Silakan coba lagi.');
-      }
+      const response = await apiClient.get(`/loans/${loanId}/export-pdf`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `Berita_Acara_${loanNumber}_${timestamp}.pdf`;
+      link.setAttribute('download', filename);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      alert(`Berita Acara berhasil diunduh: ${filename}`);
       
     } catch (error) {
       console.error('Error exporting PDF:', error);
@@ -257,7 +193,7 @@ const ManagerUsageReports = () => {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
           icon={FileText}
           title="Total Peminjaman"
@@ -279,13 +215,13 @@ const ManagerUsageReports = () => {
           subtitle="Selesai"
           color="green"
         />
-        <StatCard
+        {/*  <StatCard
           icon={Smartphone}
           title="Perangkat Terpopuler"
           value={summary.most_loaned_device?.device_name || '-'}
           subtitle={summary.most_loaned_device ? `${summary.most_loaned_device.loan_count} kali` : 'Tidak ada data'}
           color="purple"
-        />
+        /> */}
       </div>
 
       {/* Filters */}

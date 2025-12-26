@@ -51,9 +51,7 @@ const DevicesHeader = ({ navigate }) => {
         params.append("device_ids", exportFilters.device_ids);
       }
 
-      // Construct the full URL for export
-      // apiClient biasanya sudah punya baseURL = http://localhost:8000/api/v1
-      // Kita coba beberapa kemungkinan endpoint
+      
       const queryString = params.toString();
       const endpoint = queryString 
         ? `/export/excel?${queryString}` 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, User, Lock, UserPlus, ArrowRight, Shield, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import apiClient from '../services/api';
 
 const Registrasi = () => {
   const [formData, setFormData] = useState({
@@ -49,28 +50,17 @@ const Registrasi = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          username: formData.username,
-        }),
+      const response = await apiClient.post('/auth/register', {
+        email: formData.email,
+        password: formData.password,
+        username: formData.username,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(data.detail || 'Registrasi berhasil! Tunggu persetujuan admin.');
-        navigate('/login');
-      } else {
-        throw new Error(data.detail || 'Registrasi gagal');
-      }
+      toast.success(response.data.detail || 'Registrasi berhasil! Tunggu persetujuan admin.');
+      navigate('/login');
     } catch (error) {
-      toast.error(error.message || 'Kesalahan jaringan. Silakan coba lagi.');
+      const errorMessage = error.response?.data?.detail || error.message || 'Registrasi gagal';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

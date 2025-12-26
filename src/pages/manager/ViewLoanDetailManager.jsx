@@ -13,6 +13,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
+import apiClient from '../../services/api';
 
 const ViewLoanDetailManager = () => {
   const navigate = useNavigate();
@@ -25,45 +26,11 @@ const ViewLoanDetailManager = () => {
     fetchLoanDetail();
   }, [id]);
 
-  const getAuthHeaders = () => {
-    let token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (!token) {
-      alert('Sesi Anda telah berakhir. Silakan login kembali.');
-      window.location.href = '/login';
-      return null;
-    }
-    
-    const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-    return {
-      'Authorization': authToken,
-      'Content-Type': 'application/json'
-    };
-  };
-
   const fetchLoanDetail = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      const response = await fetch(`http://localhost:8000/api/v1/loans/${id}`, {
-        method: 'GET',
-        headers: headers
-      });
-
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        sessionStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const loanData = data?.loan || data?.data || data;
+      const response = await apiClient.get(`/loans/${id}`);
+      const loanData = response.data?.loan || response.data?.data || response.data;
       
       console.log('Loan detail:', loanData);
       setLoan(loanData);
@@ -80,60 +47,34 @@ const ViewLoanDetailManager = () => {
     try {
       setExportingPDF(true);
       
-      const headers = getAuthHeaders();
-      if (!headers) return;
+      const response = await apiClient.get(`/loans/${id}/export-pdf`, {
+        responseType: 'blob'
+      });
 
-      const response = await fetch(
-        `http://localhost:8000/api/v1/loans/${id}/export-pdf`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': headers.Authorization,
-            'Accept': 'application/pdf'
-          }
-        }
-      );
-
-      if (response.status === 401) {
-        alert('Sesi Anda telah berakhir. Silakan login kembali.');
-        localStorage.removeItem('token');
-        sessionStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-
-      if (response.status === 403) {
-        const errorText = await response.text();
-        console.error('403 Forbidden:', errorText);
-        alert('❌ Anda tidak memiliki akses untuk export data ini.\n\nSilakan hubungi administrator.');
-        return;
-      }
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        const timestamp = new Date().toISOString().split('T')[0];
-        const filename = `Berita_Acara_${loan.loan_number}_${timestamp}.pdf`;
-        link.setAttribute('download', filename);
-        
-        document.body.appendChild(link);
-        link.click();
-        
-        link.remove();
-        window.URL.revokeObjectURL(url);
-        
-        alert(`✅ Berita Acara berhasil diunduh: ${filename}`);
-      } else {
-        const errorText = await response.text();
-        console.error('Export error:', errorText);
-        alert('Gagal export PDF. Silakan coba lagi.');
-      }
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `Berita_Acara_${loan.loan_number}_${timestamp}.pdf`;
+      link.setAttribute('download', filename);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      alert(`✅ Berita Acara berhasil diunduh: ${filename}`);
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      alert('Terjadi kesalahan saat export PDF.');
+      
+      if (error.response?.status === 403) {
+        alert('❌ Anda tidak memiliki akses untuk export data ini.\n\nSilakan hubungi administrator.');
+      } else {
+        alert('Terjadi kesalahan saat export PDF.');
+      }
     } finally {
       setExportingPDF(false);
     }
@@ -247,7 +188,6 @@ const ViewLoanDetailManager = () => {
         </div>
       </div>
 
-      {/* Semua konten sama seperti admin - copy paste dari atas mulai dari Status Badge sampai Metadata */}
       {/* Status Badge */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between">
@@ -272,31 +212,23 @@ const ViewLoanDetailManager = () => {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Nama Peminjam
-            </label>
+            <label className="block text-sm font-medium text-gray-500 mb-1">Nama Peminjam</label>
             <p className="text-lg font-semibold text-gray-900">{loan.borrower_name}</p>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Instansi
-            </label>
-            <p className="text-lg font-semibold text-gray-900">{loan.borrower_institution || '-'}</p>
+            <label className="block text-sm font-medium text-gray-500 mb-1"></label>
+            <p className="text-lg font-semibold text-gray-900"></p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              No. Telepon
-            </label>
-            <p className="text-lg font-semibold text-gray-900">{loan.borrower_phone || '-'}</p>
+            <label className="block text-sm font-medium text-gray-500 mb-1">Pihak 1</label>
+            <p className="text-lg font-semibold text-gray-900">{loan.pihak_1?.nama || '-'}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Email
-            </label>
-            <p className="text-lg font-semibold text-gray-900">{loan.borrower_email || '-'}</p>
+            <label className="block text-sm font-medium text-gray-500 mb-1">Pihak 2</label>
+            <p className="text-lg font-semibold text-gray-900">{loan.pihak_2?.nama || '-'}</p>
           </div>
         </div>
       </div>
@@ -311,32 +243,15 @@ const ViewLoanDetailManager = () => {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Nama Kegiatan
-            </label>
+            <label className="block text-sm font-medium text-gray-500 mb-1">Nama Kegiatan</label>
             <p className="text-lg font-semibold text-gray-900">{loan.activity_name}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              No. Surat Tugas
-            </label>
+            <label className="block text-sm font-medium text-gray-500 mb-1">No. Surat Tugas</label>
             <p className="text-lg font-semibold text-gray-900">{loan.assignment_letter_number || '-'}</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Lokasi Kegiatan
-            </label>
-            <p className="text-lg font-semibold text-gray-900">{loan.activity_location || '-'}</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              PIC Kegiatan
-            </label>
-            <p className="text-lg font-semibold text-gray-900">{loan.activity_pic || '-'}</p>
-          </div>
         </div>
       </div>
 
@@ -396,31 +311,34 @@ const ViewLoanDetailManager = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {loan.loan_items.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">{index + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm font-semibold text-gray-900">
-                        {item.device_name}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {item.device_type || '-'}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm text-gray-900">{item.device_code}</div>
-                      <div className="text-xs text-gray-500">{item.nup_device}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      {getConditionBadge(item.condition_before)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {item.condition_after ? getConditionBadge(item.condition_after) : (
-                        <span className="text-sm text-gray-500">Belum dikembalikan</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {loan.loan_items.map((item, index) => {
+                  const device = item.child || item.device;
+                  return (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900">{index + 1}</td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {device?.device_name || '-'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {device?.device_type || '-'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm text-gray-900">{device?.device_code || '-'}</div>
+                        <div className="text-xs text-gray-500">{device?.nup_device || '-'}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {getConditionBadge(item.condition_before)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {item.condition_after
+                          ? getConditionBadge(item.condition_after)
+                          : <span className="text-sm text-gray-500">Belum dikembalikan</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -430,7 +348,7 @@ const ViewLoanDetailManager = () => {
       </div>
 
       {/* Catatan */}
-      {loan.notes && (
+      {loan.return_notes && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
@@ -438,7 +356,9 @@ const ViewLoanDetailManager = () => {
             </div>
             Catatan
           </h3>
-          <p className="text-gray-900 leading-relaxed whitespace-pre-line">{loan.notes}</p>
+          <p className="text-gray-900 leading-relaxed whitespace-pre-line">
+            {loan.return_notes}
+          </p>
         </div>
       )}
 
@@ -446,25 +366,9 @@ const ViewLoanDetailManager = () => {
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
           <div>
-            <span className="font-medium">Dibuat oleh:</span>{' '}
-            {loan.created_by_name || loan.created_by || '-'}
-          </div>
-          <div>
             <span className="font-medium">Dibuat pada:</span>{' '}
             {formatDate(loan.created_at)}
           </div>
-          {loan.approved_by_name && (
-            <>
-              <div>
-                <span className="font-medium">Disetujui oleh:</span>{' '}
-                {loan.approved_by_name}
-              </div>
-              <div>
-                <span className="font-medium">Disetujui pada:</span>{' '}
-                {formatDate(loan.approved_at)}
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>

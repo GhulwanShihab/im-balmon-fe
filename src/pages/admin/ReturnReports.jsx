@@ -10,6 +10,7 @@ import {
   Eye,
   User
 } from 'lucide-react';
+import apiClient from '../../services/api';
 
 const ReturnReports = () => {
   const [loans, setLoans] = useState([]);
@@ -47,61 +48,26 @@ const ReturnReports = () => {
     fetchLoanStats();
   }, []);
 
-  const getAuthHeaders = () => {
-    let token = localStorage.getItem('token');
-    if (!token) {
-      token = sessionStorage.getItem('token');
-    }
-    
-    if (!token) {
-      alert('Sesi Anda telah berakhir. Silakan login kembali.');
-      window.location.href = '/login';
-      return null;
-    }
-    
-    const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-    return {
-      'Authorization': authToken,
-      'Content-Type': 'application/json'
-    };
-  };
-
   const fetchLoans = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
 
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        page_size: '10',
-      });
+      const params = {
+        page: currentPage,
+        page_size: 10,
+      };
 
-      if (filters.status) params.append('status', filters.status);
-      if (filters.borrower_name) params.append('borrower_name', filters.borrower_name);
-      if (filters.assignment_letter_number) params.append('assignment_letter_number', filters.assignment_letter_number);
-      if (filters.loan_start_date_from) params.append('loan_start_date_from', filters.loan_start_date_from);
-      if (filters.loan_start_date_to) params.append('loan_start_date_to', filters.loan_start_date_to);
-      if (filters.sort_by) params.append('sort_by', filters.sort_by);
-      if (filters.sort_order) params.append('sort_order', filters.sort_order);
+      if (filters.status) params.status = filters.status;
+      if (filters.borrower_name) params.borrower_name = filters.borrower_name;
+      if (filters.assignment_letter_number) params.assignment_letter_number = filters.assignment_letter_number;
+      if (filters.loan_start_date_from) params.loan_start_date_from = filters.loan_start_date_from;
+      if (filters.loan_start_date_to) params.loan_start_date_to = filters.loan_start_date_to;
+      if (filters.sort_by) params.sort_by = filters.sort_by;
+      if (filters.sort_order) params.sort_order = filters.sort_order;
 
-      const response = await fetch(`http://localhost:8000/api/v1/loans?${params}`, {
-        method: 'GET',
-        headers: headers
-      });
+      const response = await apiClient.get('/loans', { params });
+      const data = response.data;
 
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        sessionStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       setLoans(data.loans || []);
       setTotal(data.total || 0);
       setTotalPages(data.total_pages || 1);
@@ -116,24 +82,16 @@ const ReturnReports = () => {
 
   const fetchLoanStats = async () => {
     try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      const response = await fetch('http://localhost:8000/api/v1/loans/stats', {
-        method: 'GET',
-        headers: headers
+      const response = await apiClient.get('/loans/stats');
+      const data = response.data;
+      
+      setStats({
+        total_loans: data.total_loans || 0,
+        active_loans: data.active_loans || 0,
+        returned_loans: data.returned_loans || 0,
+        overdue_loans: data.overdue_loans || 0,
+        cancelled_loans: data.cancelled_loans || 0
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setStats({
-          total_loans: data.total_loans || 0,
-          active_loans: data.active_loans || 0,
-          returned_loans: data.returned_loans || 0,
-          overdue_loans: data.overdue_loans || 0,
-          cancelled_loans: data.cancelled_loans || 0
-        });
-      }
     } catch (error) {
       console.error('Error fetching loan stats:', error);
     }
@@ -142,39 +100,24 @@ const ReturnReports = () => {
   const handleExportSingle = async (loanId, loanNumber) => {
     try {
       setExportingId(loanId);
-      const headers = getAuthHeaders();
-      if (!headers) return;
 
-      const response = await fetch(`http://localhost:8000/api/v1/loans/${loanId}/export`, {
-        method: 'GET',
-        headers: {
-          'Authorization': headers.Authorization
-        }
+      const response = await apiClient.get(`/loans/${loanId}/export`, {
+        responseType: 'blob'
       });
-      
-      if (response.status === 401) {
-        alert('Sesi Anda telah berakhir. Silakan login kembali.');
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `pengembalian-${loanNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-      } else {
-        alert('Gagal export laporan. Endpoint mungkin belum tersedia.');
-      }
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `pengembalian-${loanNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
     } catch (error) {
       console.error('Error exporting report:', error);
-      alert('Gagal export laporan.');
+      alert('Gagal export laporan. Endpoint mungkin belum tersedia.');
     } finally {
       setExportingId(null);
     }

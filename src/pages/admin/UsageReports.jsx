@@ -11,6 +11,7 @@ import {
   Eye,
   FileDown
 } from 'lucide-react';
+import apiClient from '../../services/api';
 
 const UsageReports = () => {
   const navigate = useNavigate();
@@ -21,8 +22,6 @@ const UsageReports = () => {
   const [total, setTotal] = useState(0);
   const [exportingId, setExportingId] = useState(null);
   
-  const [loadingRequests, setLoadingRequests] = useState(true);
-  const [currentRequestPage, setCurrentRequestPage] = useState(1);
   const [summary, setSummary] = useState({
     total_loans: 0,
     total_returned: 0,
@@ -37,46 +36,6 @@ const UsageReports = () => {
     sort_by: 'loan_start_date',
     sort_order: 'desc'
   });
-  //const [showDebug, setShowDebug] = useState(false);
-
-  // Debug: Test API connection
-  const testApiConnection = async () => {
-    console.log('=== API CONNECTION TEST ===');
-    let token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    console.log('1. Token exists:', !!token);
-    console.log('2. Token location:', localStorage.getItem('token') ? 'localStorage' : sessionStorage.getItem('token') ? 'sessionStorage' : 'none');
-    console.log('3. Token value:', token?.substring(0, 50) + '...');
-    
-    try {
-      const response = await fetch('http://localhost:8000/api/v1/loans?page=1&page_size=1', {
-        method: 'GET',
-        headers: {
-          'Authorization': token?.startsWith('Bearer ') ? token : `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log('4. Response status:', response.status);
-      console.log('5. Response ok:', response.ok);
-      
-      if (response.status === 401) {
-        console.error('❌ UNAUTHORIZED: Token tidak valid atau sudah expired');
-        console.log('Silakan login ulang untuk mendapatkan token baru');
-        const errorData = await response.json();
-        console.log('Error detail:', errorData);
-      } else if (response.ok) {
-        const data = await response.json();
-        console.log('✅ API CONNECTION SUCCESS');
-        console.log('6. Response data:', data);
-      } else {
-        const errorData = await response.json();
-        console.log('❌ ERROR:', errorData);
-      }
-    } catch (error) {
-      console.error('❌ API CONNECTION FAILED:', error);
-    }
-    console.log('=== END TEST ===');
-  };
 
   useEffect(() => {
     fetchLoanData();
@@ -86,77 +45,23 @@ const UsageReports = () => {
     fetchSummary();
   }, []);
 
-  const getAuthHeaders = () => {
-    // Cek token di localStorage dulu, kalau tidak ada cek sessionStorage
-    let token = localStorage.getItem('token');
-    if (!token) {
-      token = sessionStorage.getItem('token');
-    }
-    
-    if (!token) {
-      console.error('No token found in localStorage or sessionStorage');
-      alert('Sesi Anda telah berakhir. Silakan login kembali.');
-      window.location.href = '/login';
-      return null;
-    }
-    
-    // Debug: Log token format
-    console.log('Token found in:', localStorage.getItem('token') ? 'localStorage' : 'sessionStorage');
-    console.log('Token preview:', token.substring(0, 30) + '...');
-    
-    // Pastikan token tidak sudah include "Bearer "
-    const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-    
-    return {
-      'Authorization': authToken,
-      'Content-Type': 'application/json'
-    };
-  };
-
   const fetchLoanData = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
       
-      // Build query params
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        page_size: '10',
-      });
+      const params = {
+        page: currentPage,
+        page_size: 10,
+      };
 
-      if (filters.borrower_name) params.append('borrower_name', filters.borrower_name);
-      if (filters.assignment_letter_number) params.append('assignment_letter_number', filters.assignment_letter_number);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.sort_by) params.append('sort_by', filters.sort_by);
-      if (filters.sort_order) params.append('sort_order', filters.sort_order);
+      if (filters.borrower_name) params.borrower_name = filters.borrower_name;
+      if (filters.assignment_letter_number) params.assignment_letter_number = filters.assignment_letter_number;
+      if (filters.status) params.status = filters.status;
+      if (filters.sort_by) params.sort_by = filters.sort_by;
+      if (filters.sort_order) params.sort_order = filters.sort_order;
 
-      const url = `http://localhost:8000/api/v1/loans?${params}`;
-      console.log('Fetching URL:', url);
-      console.log('Request headers:', headers);
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: headers
-      });
-
-      console.log('Response status:', response.status);
-
-      if (response.status === 401) {
-        console.error('Unauthorized - clearing token and redirecting to login');
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error response:', errorData);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Loans data received:', data);
+      const response = await apiClient.get('/loans', { params });
+      const data = response.data;
 
       setLoanData(data.loans || []);
       setTotal(data.total || 0);
@@ -172,186 +77,65 @@ const UsageReports = () => {
 
   const fetchSummary = async () => {
     try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      const response = await fetch('http://localhost:8000/api/v1/loans/stats', {
-        method: 'GET',
-        headers: headers
+      const response = await apiClient.get('/loans/stats');
+      const data = response.data;
+      
+      setSummary({
+        total_loans: data.total_loans || 0,
+        total_active: data.active_loans || 0,
+        total_returned: data.returned_loans || 0,
+        most_loaned_device: data.most_borrowed_device || null
       });
-
-      if (response.status === 401) {
-        console.error('Unauthorized on stats endpoint');
-        return;
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Stats data:', data);
-        setSummary({
-          total_loans: data.total_loans || 0,
-          total_active: data.active_loans || 0,
-          total_returned: data.returned_loans || 0,
-          most_loaned_device: data.most_borrowed_device || null
-        });
-      }
     } catch (error) {
       console.error('Error fetching summary:', error);
     }
   };
 
-  /**
-   * ✨ FUNGSI BARU: Export PDF Berita Acara
-   * Fungsi ini akan memanggil endpoint backend untuk generate dan download PDF
-   */
   const handleExportPDF = async (loanId, loanNumber) => {
     try {
       setExportingId(loanId);
       console.log(`📄 Starting PDF export for loan ID: ${loanId}`);
       
-      const headers = getAuthHeaders();
-      if (!headers) {
-        console.error('❌ No auth headers available');
-        return;
-      }
-
-      // Call endpoint export PDF
-      const response = await fetch(
-        `http://localhost:8000/api/v1/loans/${loanId}/export-pdf`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': headers.Authorization
-          }
-        }
-      );
+      const response = await apiClient.get(`/loans/${loanId}/export-pdf`, {
+        responseType: 'blob'
+      });
       
-      console.log('PDF Export response status:', response.status);
-
-      // Handle unauthorized
-      if (response.status === 401) {
-        alert('Sesi Anda telah berakhir. Silakan login kembali.');
-        localStorage.removeItem('token');
-        sessionStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-
-      // Handle not found
-      if (response.status === 404) {
-        alert('Data peminjaman tidak ditemukan.');
-        return;
-      }
-
-      // Handle forbidden
-      if (response.status === 403) {
-        alert('Anda tidak memiliki akses untuk export data ini.');
-        return;
-      }
-
-      // Handle success
-      if (response.ok) {
-        console.log('✅ PDF export successful, downloading file...');
-        
-        // Get blob data
-        const blob = await response.blob();
-        console.log('Blob size:', blob.size, 'bytes');
-        
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Generate filename with timestamp
-        const timestamp = new Date().toISOString().split('T')[0];
-        const filename = `Berita_Acara_${loanNumber}_${timestamp}.pdf`;
-        link.setAttribute('download', filename);
-        
-        // Trigger download
-        document.body.appendChild(link);
-        link.click();
-        
-        // Cleanup
-        link.remove();
-        window.URL.revokeObjectURL(url);
-        
-        console.log('✅ PDF downloaded successfully:', filename);
-        
-        // Show success message (optional - bisa pakai toast library)
-        alert(`Berita Acara berhasil diunduh: ${filename}`);
-        
-      } else {
-        // Handle other errors
-        const errorText = await response.text();
-        console.error('❌ Export error:', errorText);
-        
-        // Try to parse error message
-        try {
-          const errorJson = JSON.parse(errorText);
-          alert(`Gagal export PDF: ${errorJson.detail || 'Unknown error'}`);
-        } catch {
-          alert('Gagal export PDF. Silakan coba lagi atau hubungi administrator.');
-        }
-      }
+      console.log('✅ PDF export successful, downloading file...');
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `Berita_Acara_${loanNumber}_${timestamp}.pdf`;
+      link.setAttribute('download', filename);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ PDF downloaded successfully:', filename);
+      alert(`Berita Acara berhasil diunduh: ${filename}`);
       
     } catch (error) {
       console.error('❌ Error exporting PDF:', error);
-      alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
-    } finally {
-      setExportingId(null);
-    }
-  };
-
-  /**
-   * Legacy function - masih dipertahankan untuk backward compatibility
-   * Jika endpoint /export masih digunakan untuk format lain
-   */
-  const handleExportSingle = async (loanId, loanNumber) => {
-    try {
-      setExportingId(loanId);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      // Export single loan by ID
-      const response = await fetch(`http://localhost:8000/api/v1/loans/${loanId}/export`, {
-        method: 'GET',
-        headers: {
-          'Authorization': headers.Authorization
-        }
-      });
       
-      if (response.status === 401) {
-        alert('Sesi Anda telah berakhir. Silakan login kembali.');
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `peminjaman-${loanNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
+      if (error.response?.status === 404) {
+        alert('Data peminjaman tidak ditemukan.');
+      } else if (error.response?.status === 403) {
+        alert('Anda tidak memiliki akses untuk export data ini.');
       } else {
-        const errorText = await response.text();
-        console.error('Export error:', errorText);
-        alert('Gagal export laporan. Endpoint mungkin belum tersedia.');
+        alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
       }
-    } catch (error) {
-      console.error('Error exporting report:', error);
-      alert('Gagal export laporan.');
     } finally {
       setExportingId(null);
     }
   };
 
   const handleViewDetail = (loanId) => {
-    // Navigate ke detail page atau buka modal
     navigate(`/admin/loans/${loanId}`);
   };
 
@@ -422,46 +206,8 @@ const UsageReports = () => {
         </div>
       </div>
 
-      {/* Debug Panel 
-      {showDebug && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h3 className="font-bold text-yellow-900 mb-2">Debug Panel</h3>
-          <div className="space-y-2 text-sm">
-            <div>
-              <strong>Token di localStorage:</strong> {localStorage.getItem('token') ? '✅ Ada' : '❌ Tidak ada'}
-            </div>
-            <div>
-              <strong>Token di sessionStorage:</strong> {sessionStorage.getItem('token') ? '✅ Ada' : '❌ Tidak ada'}
-            </div>
-            <div>
-              <strong>Token Preview:</strong> <code className="bg-white px-2 py-1 rounded text-xs break-all">
-                {(localStorage.getItem('token') || sessionStorage.getItem('token'))?.substring(0, 50)}...
-              </code>
-            </div>
-            <div>
-              <strong>API URL:</strong> <code className="text-xs">http://localhost:8000/api/v1/loans</code>
-            </div>
-            <div>
-              <strong>PDF Export Endpoint:</strong> <code className="text-xs">http://localhost:8000/api/v1/loans/:id/export-pdf</code>
-            </div>
-            <div>
-              <strong>CORS Origins dari Backend:</strong> http://localhost:3000, http://127.0.0.1:3000
-            </div>
-            <button
-              onClick={testApiConnection}
-              className="mt-2 px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded"
-            >
-              Test API Connection
-            </button>
-            <div className="text-xs text-yellow-800 mt-2">
-              Buka Console (F12) untuk melihat hasil test lengkap
-            </div>
-          </div>
-        </div>
-      )} */}
-
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
           icon={FileText}
           title="Total Peminjaman"
@@ -483,13 +229,13 @@ const UsageReports = () => {
           subtitle="Selesai"
           color="green"
         />
-        <StatCard
+        {/* <StatCard
           icon={Smartphone}
           title="Perangkat Terpopuler"
           value={summary.most_loaned_device?.device_name || '-'}
           subtitle={summary.most_loaned_device ? `${summary.most_loaned_device.loan_count} kali` : 'Tidak ada data'}
           color="purple"
-        />
+        /> */}
       </div>
 
       {/* Filters */}
@@ -577,7 +323,6 @@ const UsageReports = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {/* ✨ TOMBOL EXPORT PDF BARU */}
                           <button
                             onClick={() => handleExportPDF(loan.id, loan.loan_number)}
                             disabled={exportingId === loan.id}

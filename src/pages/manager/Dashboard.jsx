@@ -17,22 +17,6 @@ import {
 } from 'lucide-react';
 import apiClient from '../../services/api';
 
-/**
- * MANAGER DASHBOARD - READ-ONLY WITH APPROVAL CAPABILITIES
- * 
- * Manager Permissions:
- * ✅ USER_VIEW, USER_VIEW_ALL, USER_APPROVE, USER_STATS
- * ✅ DEVICE_VIEW, DEVICE_STATS, DEVICE_USAGE_STATS
- * ✅ LOAN_VIEW, LOAN_VIEW_ALL, LOAN_APPROVE, LOAN_CANCEL, LOAN_STATS, LOAN_CONDITION_APPROVE
- * ✅ EMPLOYEE_VIEW
- * ✅ EXPORT_PDF, EXPORT_EXCEL, EXPORT_DEVICE_USAGE, EXPORT_LOAN_REPORT
- * 
- * Key Features:
- * - View-only statistics for all entities
- * - Approval workflows (users, loans, conditions)
- * - Export capabilities
- * - NO create/update/delete operations
- */
 
 const ManagerDashboard = () => {
   const [stats, setStats] = useState({
@@ -594,7 +578,7 @@ const ManagerDashboard = () => {
           <Activity className="w-5 h-5 mr-2 text-green-600" />
           Aksi Cepat Manager
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a 
             href="/manager/user-approvals"
             className="flex flex-col items-center justify-center space-y-2 p-5 bg-green-50 hover:bg-green-100 rounded-lg border-2 border-green-200 hover:border-green-400 transition-all group"
@@ -619,19 +603,12 @@ const ManagerDashboard = () => {
             <span className="text-blue-700 font-medium text-center">Laporan Penggunaan</span>
           </a>
           
-          <a 
-            href="/manager/statistics"
-            className="flex flex-col items-center justify-center space-y-2 p-5 bg-purple-50 hover:bg-purple-100 rounded-lg border-2 border-purple-200 hover:border-purple-400 transition-all group"
-          >
-            <BarChart3 className="w-7 h-7 text-purple-600 group-hover:scale-110 transition-transform" />
-            <span className="text-purple-700 font-medium text-center">Statistik Detail</span>
-          </a>
         </div>
       </div>
 
       {/* ============================================ */}
       {/* MANAGER INFO BOX - PERMISSION NOTICE */}
-      {/* ============================================ */}
+      {/* ============================================ 
       <div className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-100 border-l-4 border-green-500 p-6 rounded-lg shadow-sm">
         <div className="flex items-start">
           <div className="flex-shrink-0">
@@ -668,9 +645,9 @@ const ManagerDashboard = () => {
                 </span>
               </p>
             </div>
-          </div>
-        </div>
-      </div>
+          </div> 
+        </div> 
+      </div> */}
     </div>
   );
 };

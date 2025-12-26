@@ -59,10 +59,10 @@ const ManagerLayout = () => {
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl border-r border-gray-100 transform ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0`}>
+      } transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0 flex flex-col`}>
         
         {/* Sidebar header - warna hijau untuk manager */}
-        <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100 bg-gradient-to-r from-green-600 to-green-700">
+        <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100 bg-gradient-to-r from-green-600 to-green-700 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
               <Smartphone className="w-6 h-6 text-white" />
@@ -80,7 +80,7 @@ const ManagerLayout = () => {
           </button>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation - flex-1 to take available space */}
         <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 px-3">
             Menu Utama
@@ -116,8 +116,8 @@ const ManagerLayout = () => {
           })}
         </nav>
 
-        {/* User section */}
-        <div className="border-t border-gray-100 p-6 bg-gray-50">
+        {/* User section - flex-shrink-0 to stay at bottom */}
+        <div className="border-t border-gray-100 p-6 bg-gray-50 flex-shrink-0">
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-md">
               <User className="w-6 h-6 text-white" />

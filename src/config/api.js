@@ -4,6 +4,20 @@ const API_CONFIG = {
   TIMEOUT: 10000,
 };
 
+/**
+ * Helper function to get full media URL from relative path
+ * @param {string} relativePath - The relative path (e.g., /uploads/photos/device.jpg)
+ * @returns {string} - Full URL (e.g., http://localhost:8000/uploads/photos/device.jpg)
+ */
+export const getMediaUrl = (relativePath) => {
+  if (!relativePath) return '';
+  // If already full URL, return as is
+  if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+    return relativePath;
+  }
+  return `${API_CONFIG.BASE_URL}${relativePath}`;
+};
+
 export const API_ENDPOINTS = {
   // Auth endpoints
   LOGIN: '/auth/login',
