@@ -143,7 +143,7 @@ const AddDevice = () => {
                 value={device.device_name}
                 onChange={(e) => handleInputChange('device_name', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Contoh: Oscilloscope Digital"
+                placeholder="Masukkan Nama Perangkat"
               />
             </div>
             
@@ -157,7 +157,7 @@ const AddDevice = () => {
                 onChange={(e) => handleInputChange('device_code', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 required
-                placeholder="Contoh: OSC-001"
+                placeholder="Masukkan Kode Perangkat"
               />
             </div>
             <div>
@@ -223,7 +223,7 @@ const AddDevice = () => {
                 value={device.device_type}
                 onChange={(e) => handleInputChange('device_type', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Contoh: Oscilloscope, Multimeter"
+                placeholder="Masukkan Tipe Perangkat"
               />
             </div>
           </div>
@@ -246,7 +246,7 @@ const AddDevice = () => {
                 value={device.device_station}
                 onChange={(e) => handleInputChange('device_station', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Contoh: Stasiun 1, Lab A"
+                placeholder="Masukkan Stasiun Perangkat"
               />
             </div>
 
@@ -259,7 +259,7 @@ const AddDevice = () => {
                 value={device.device_room}
                 onChange={(e) => handleInputChange('device_room', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Contoh: Lab Elektronik 1"
+                placeholder="Masukkan Ruangan Tempat Perangkat"
               />
             </div>
           </div>
