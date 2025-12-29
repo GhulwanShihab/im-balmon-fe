@@ -139,7 +139,7 @@ const Registrasi = () => {
                         name="username"
                         value={formData.username}
                         onChange={handleInputChange}
-                        placeholder="Masukkan nama depan"
+                        placeholder="Masukkan username"
                         required
                         className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 text-gray-900 placeholder-gray-500"
                       />
@@ -321,15 +321,6 @@ const Registrasi = () => {
                 className="text-emerald-600 hover:text-emerald-800 font-semibold transition-colors hover:underline"
               >
                 Masuk
-              </button>
-            </p>
-            <p className="text-gray-600 text-sm">
-              Butuh akses admin?{' '}
-              <button
-                onClick={() => navigate('/admin-info')}
-                className="text-blue-600 hover:text-blue-800 font-medium transition-colors hover:underline"
-              >
-                Info Admin
               </button>
             </p>
           </div>

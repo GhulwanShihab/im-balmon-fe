@@ -108,9 +108,20 @@ const BorrowPage = () => {
       const scanner = new Html5QrcodeScanner(
         "qr-reader",
         { 
-          fps: 10, 
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
+          fps: 15, // Tingkatkan FPS untuk responsivitas
+          qrbox: function(viewfinderWidth, viewfinderHeight) {
+            // Responsive qrbox - lebih besar di mobile
+            const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+            const qrboxSize = Math.floor(minEdgeSize * 0.75);
+            return { width: qrboxSize, height: qrboxSize };
+          },
+          aspectRatio: 1.0,
+          showTorchButtonIfSupported: true, // Tombol senter untuk kondisi gelap
+          showZoomSliderIfSupported: true,  // Slider zoom
+          defaultZoomValueIfSupported: 2,   // Default zoom 2x untuk scan lebih mudah
+          formatsToSupport: [ 0 ], // Hanya QR code (format 0)
+          rememberLastUsedCamera: true,     // Ingat kamera yang dipilih
+          supportedScanTypes: [0]           // Kamera saja
         },
         false
       );
@@ -123,8 +134,8 @@ const BorrowPage = () => {
           setIsScanning(false);
         },
         (error) => {
-          // Handle scan error
-          console.log('QR scan error:', error);
+          // Handle scan error - ignore untuk menghindari spam console
+          // console.log('QR scan error:', error);
         }
       );
 
@@ -142,22 +153,35 @@ const BorrowPage = () => {
 
   const handleQRScanSuccess = async (decodedText) => {
   try {
-    // Coba parse JSON dari hasil scan
-    let deviceCode = decodedText;
+    // Trim whitespace dari hasil scan kamera
+    let deviceCode = decodedText.trim();
+    
+    console.log('📷 Raw scanned text:', JSON.stringify(decodedText));
+    console.log('📷 Trimmed text:', deviceCode);
+    
     try {
       const parsed = JSON.parse(decodedText);
       if (parsed.device_code) {
-        deviceCode = parsed.device_code;
+        deviceCode = parsed.device_code.trim();
+        console.log('📷 Extracted device_code from JSON:', deviceCode);
       }
     } catch {
       // kalau bukan JSON, biarkan tetap pakai decodedText langsung
+      console.log('📷 Not JSON, using raw text as device code');
     }
 
-    const response = await apiClient.get(`/devices/code/${deviceCode}`);
-    const device = response.data;
+    console.log('📷 Final device code to search:', deviceCode);
 
-    if (device.device_status !== 'tersedia') {
-      toast.error('Perangkat tidak tersedia untuk dipinjam');
+    const response = await apiClient.get(`/devices/code/${encodeURIComponent(deviceCode)}`);
+    const device = response.data;
+    
+    console.log('✅ Device found:', device);
+    console.log('📋 Device status:', device.device_status);
+
+    // Case-insensitive comparison untuk status
+    const status = (device.device_status || '').toUpperCase();
+    if (status !== 'TERSEDIA') {
+      toast.error(`Perangkat tidak tersedia untuk dipinjam (status: ${device.device_status})`);
       return;
     }
 
@@ -169,10 +193,22 @@ const BorrowPage = () => {
     setSelectedDevices(prev => [...prev, device]);
     toast.success(`Perangkat ${device.device_name} berhasil ditambahkan`);
   } catch (error) {
-    toast.error('Perangkat tidak ditemukan atau QR tidak valid');
-    console.error('Error saat memproses QR:', error);
+    console.error('❌ Error saat memproses QR:', error);
+    console.error('❌ Error response:', error.response?.data);
+    console.error('❌ Error status:', error.response?.status);
+    console.error('❌ Scanned text was:', decodedText);
+    
+    // Tampilkan pesan error yang lebih spesifik
+    if (error.response?.status === 404) {
+      toast.error(`Perangkat dengan kode "${deviceCode}" tidak ditemukan`);
+    } else if (error.response?.status === 401 || error.response?.status === 403) {
+      toast.error('Anda tidak memiliki akses untuk melihat perangkat');
+    } else {
+      toast.error(error.response?.data?.detail || 'Gagal memproses QR code');
+    }
   }
 };
+
 
 
   const handleManualDeviceSelect = (device) => {
@@ -329,19 +365,38 @@ const BorrowPage = () => {
         <div className="space-y-4 sm:space-y-6">
           {/* QR Scanner Section */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Scan QR Code Perangkat</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Scan QR Code Perangkat</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Arahkan kamera ke QR code perangkat atau gunakan file gambar QR
+            </p>
             
             {!isScanning ? (
               <button
                 onClick={startQRScanner}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-4 rounded-xl transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 sm:py-5 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-3 text-sm sm:text-base"
               >
-                <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
                 <span>Mulai Scan QR</span>
               </button>
             ) : (
               <div className="space-y-4">
-                <div id="qr-reader" className="w-full max-w-md mx-auto"></div>
+                {/* Hint untuk pengguna mobile */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                  <p className="font-medium mb-1">💡 Tips untuk scan lebih baik:</p>
+                  <ul className="list-disc list-inside space-y-1 text-blue-700">
+                    <li>Pastikan QR code dalam pencahayaan yang cukup</li>
+                    <li>Jaga jarak 10-20 cm dari QR code</li>
+                    <li>Gunakan tombol senter jika kondisi gelap</li>
+                  </ul>
+                </div>
+                
+                {/* QR Reader Container - responsive untuk mobile */}
+                <div 
+                  id="qr-reader" 
+                  className="w-full mx-auto rounded-lg overflow-hidden"
+                  style={{ maxWidth: '100%' }}
+                ></div>
+                
                 <button
                   onClick={stopQRScanner}
                   className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
