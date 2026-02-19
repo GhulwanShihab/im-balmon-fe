@@ -372,10 +372,10 @@ const ManagerUsers = () => {
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            {user.username?.[0]?.toUpperCase() || 'U'}
+                            {user.nama?.[0]?.toUpperCase() || 'U'}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-medium text-slate-800 truncate">{user.username}</p>
+                            <p className="font-medium text-slate-800 truncate">{user.nama}</p>
                           </div>
                         </div>
                       </td>

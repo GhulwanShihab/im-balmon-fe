@@ -33,6 +33,9 @@ import Employees from './pages/admin/employees/Employees';
 import AddEmployee from './pages/admin/employees/AddEmployee';
 import EditEmployee from './pages/admin/employees/EditEmployee';
 import ViewEmployee from './pages/admin/employees/ViewEmployee';
+import Locations from './pages/admin/locations/Locations';
+import AddLocation from './pages/admin/locations/AddLocation';
+import EditLocation from './pages/admin/locations/EditLocation';
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/Dashboard';
@@ -364,6 +367,9 @@ function App() {
             <Route path="employees/add" element={<AddEmployee />} />
             <Route path="employees/:id/edit" element={<EditEmployee />} />
             <Route path="employees/:id/view" element={<ViewEmployee />} />
+            <Route path="locations" element={<Locations />} />
+            <Route path="locations/add" element={<AddLocation />} />
+            <Route path="locations/:id/edit" element={<EditLocation />} />
           </Route>
 
           {/* Manager Routes */}

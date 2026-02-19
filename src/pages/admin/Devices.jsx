@@ -131,10 +131,9 @@ const Devices = () => {
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Kondisi</option>
-              <option value="baik">Baik</option>
-              <option value="rusak_ringan">Rusak Ringan</option>
-              <option value="rusak_berat">Rusak Berat</option>
-              <option value="hilang">Hilang</option>
+              <option value="BAIK">Baik</option>
+              <option value="RUSAK">Rusak</option>
+              <option value="MAINTENANCE">Maintenance</option>
             </select>
             
             <select
@@ -209,18 +208,18 @@ const Devices = () => {
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          device.device_condition === 'baik' 
+                          device.device_condition?.toUpperCase() === 'BAIK' 
                             ? 'bg-green-100 text-green-800'
-                            : device.device_condition === 'rusak_ringan'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : device.device_condition === 'hilang'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-red-100 text-red-800'
+                            : device.device_condition?.toUpperCase() === 'RUSAK'
+                            ? 'bg-red-100 text-red-800'
+                            : device.device_condition?.toUpperCase() === 'MAINTENANCE'
+                            ? 'bg-sky-100 text-sky-800'
+                            : 'bg-gray-100 text-gray-800'
                         }`}>
-                          {device.device_condition === 'baik' ? 'Baik' :
-                           device.device_condition === 'rusak_ringan' ? 'Rusak Ringan' :
-                           device.device_condition === 'rusak_berat' ? 'Rusak Berat' : 
-                           device.device_condition === 'hilang' ? 'Hilang' : device.device_condition}
+                          {device.device_condition?.toUpperCase() === 'BAIK' ? 'Baik' :
+                           device.device_condition?.toUpperCase() === 'RUSAK' ? 'Rusak' :
+                           device.device_condition?.toUpperCase() === 'MAINTENANCE' ? 'Maintenance' : 
+                           device.device_condition || '-'}
                         </span>
                       </td>
                       <td className="px-4 py-4">

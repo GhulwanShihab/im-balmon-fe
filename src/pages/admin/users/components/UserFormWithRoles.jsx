@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 const UserFormWithRoles = ({ onSubmit, initialData = {}, isEdit = false }) => {
   const [form, setForm] = useState({
-    username: initialData.username || "",
+    nama: initialData.nama || "",
     email: initialData.email || "",
     password: "",
     is_active: initialData.is_active ?? true,
@@ -50,10 +50,10 @@ const UserFormWithRoles = ({ onSubmit, initialData = {}, isEdit = false }) => {
     const newErrors = {};
 
     // Username validation
-    if (!form.username.trim()) {
-      newErrors.username = "Username wajib diisi";
-    } else if (form.username.length < 3) {
-      newErrors.username = "Username minimal 3 karakter";
+    if (!form.nama.trim()) {
+      newErrors.nama = "Nama lengkap wajib diisi";
+    } else if (form.nama.length < 3) {
+      newErrors.nama = "Nama minimal 3 karakter";
     }
 
     // Email validation
@@ -121,27 +121,27 @@ const UserFormWithRoles = ({ onSubmit, initialData = {}, isEdit = false }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-      {/* Username */}
+      {/* Nama Lengkap */}
       <div>
         <label className="block mb-2 font-medium text-slate-700">
-          Username <span className="text-red-500">*</span>
+          Nama Lengkap <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
-          value={form.username}
-          onChange={(e) => handleInputChange('username', e.target.value)}
+          value={form.nama}
+          onChange={(e) => handleInputChange('nama', e.target.value)}
           required
           disabled={isSubmitting}
-          placeholder="Masukkan username"
-          autoComplete="username"
+          placeholder="Masukkan nama lengkap"
+          autoComplete="name"
           className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-slate-100 disabled:cursor-not-allowed ${
-            errors.username ? "border-red-500 bg-red-50" : "border-slate-300"
+            errors.nama ? "border-red-500 bg-red-50" : "border-slate-300"
           }`}
         />
-        {errors.username && (
+        {errors.nama && (
           <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
             <AlertCircle size={14} />
-            <span>{errors.username}</span>
+            <span>{errors.nama}</span>
           </div>
         )}
       </div>

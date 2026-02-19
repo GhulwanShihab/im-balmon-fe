@@ -66,15 +66,11 @@ const ManagerUserApprovals = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Nama</label>
-                <p className="text-sm text-gray-900 mt-1">{user.first_name} {user.last_name}</p>
+                <p className="text-sm text-gray-900 mt-1">{user.nama || '-'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email</label>
                 <p className="text-sm text-gray-900 mt-1">{user.email}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
-                <p className="text-sm text-gray-900 mt-1">{user.username || '-'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Tanggal Daftar</label>
@@ -100,7 +96,7 @@ const ManagerUserApprovals = () => {
             </button>
             <button
               onClick={() => {
-                handleReject(user.id, `${user.first_name} ${user.last_name}`);
+                handleReject(user.id, user.nama);
                 onClose();
               }}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors flex items-center gap-2"
@@ -110,7 +106,7 @@ const ManagerUserApprovals = () => {
             </button>
             <button
               onClick={() => {
-                handleApprove(user.id, `${user.first_name} ${user.last_name}`);
+                handleApprove(user.id, user.nama);
                 onClose();
               }}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors flex items-center gap-2"
@@ -170,12 +166,11 @@ const ManagerUserApprovals = () => {
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-sm">
-                          {user.first_name?.[0]?.toUpperCase() || 'U'}
+                          {user.nama?.[0]?.toUpperCase() || 'U'}
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">
-                            {user.first_name} {user.last_name}
-                          </p>
+                            {user.nama}</p>
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 mt-1">
                             <Calendar className="w-3 h-3" />
                             Menunggu
@@ -211,14 +206,14 @@ const ManagerUserApprovals = () => {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleApprove(user.id, `${user.first_name} ${user.last_name}`)}
+                          onClick={() => handleApprove(user.id, user.nama)}
                           className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2"
                         >
                           <UserCheck className="w-4 h-4" />
                           Setujui
                         </button>
                         <button
-                          onClick={() => handleReject(user.id, `${user.first_name} ${user.last_name}`)}
+                          onClick={() => handleReject(user.id, user.nama)}
                           className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2"
                         >
                           <UserX className="w-4 h-4" />

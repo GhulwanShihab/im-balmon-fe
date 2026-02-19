@@ -9,10 +9,12 @@ import {
   Calendar,
   User,
   MessageSquare,
-  Star
+  Upload,
+  ImageIcon,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import apiClient from '../../services/api'; // ✅ Import apiClient
+import apiClient from '../../services/api';
 
 const ReturnPage = () => {
   const [loans, setLoans] = useState([]);
@@ -21,9 +23,9 @@ const ReturnPage = () => {
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [returnData, setReturnData] = useState({
     device_condition_on_return: 'BAIK',
-    return_notes: '',
-    rating: 5
+    return_notes: ''
   });
+  const [evidenceFiles, setEvidenceFiles] = useState({}); // { [item.id]: File }
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -95,11 +97,9 @@ const ReturnPage = () => {
     setSubmitting(true);
 
     try {
-      // ✅ Gunakan apiClient.post (token otomatis)
       const payload = {
         actual_return_date: new Date().toISOString().split('T')[0],
         return_notes: returnData.return_notes || '',
-        rating: returnData.rating,
         loan_items: selectedLoan.loan_items.map(item => ({
           id: item.id,
           device_id: item.device_id,
@@ -114,20 +114,46 @@ const ReturnPage = () => {
         payload
       );
 
+      // Upload evidence photos for condition changes
+      if (response.data && Object.keys(evidenceFiles).length > 0) {
+        // Fetch condition change requests for this loan
+        try {
+          const ccResponse = await apiClient.get('/loans/condition-change-requests', {
+            params: { loan_id: selectedLoan.id }
+          });
+          const changeRequests = ccResponse.data || [];
+          
+          for (const req of changeRequests) {
+            // Find matching evidence file by loan_item_id
+            if (evidenceFiles[req.loan_item_id]) {
+              const formData = new FormData();
+              formData.append('file', evidenceFiles[req.loan_item_id]);
+              await apiClient.post(
+                `/loans/condition-change/${req.id}/upload-evidence`,
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+              );
+            }
+          }
+        } catch (uploadError) {
+          console.error('Error uploading evidence:', uploadError);
+          toast.error('Pengembalian berhasil, tapi gagal upload foto bukti.');
+        }
+      }
+
       toast.success('Pengajuan pengembalian berhasil! Menunggu verifikasi admin.');
       setShowReturnModal(false);
       setReturnData({
         device_condition_on_return: 'BAIK',
-        return_notes: '',
-        rating: 5
+        return_notes: ''
       });
+      setEvidenceFiles({});
       fetchLoans();
     } catch (error) {
       console.error('Return error:', error);
       const errorMessage = error.response?.data?.message || 'Gagal mengajukan pengembalian';
       toast.error(errorMessage);
       
-      // ✅ Handle error 401
       if (error.response?.status === 401) {
         navigate('/login');
       }
@@ -322,7 +348,7 @@ const ReturnPage = () => {
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {selectedLoan.loan_items.map((item, index) => (
                   <div key={item.id} className="border rounded-xl p-4 bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="font-semibold text-gray-900">
                           {item.child?.device_name || item.device?.device_name || `Unit ${index + 1}`}
@@ -345,9 +371,54 @@ const ReturnPage = () => {
                         className="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="BAIK">Baik</option>
-                        <option value="RUSAK_RINGAN">Rusak Ringan</option>
-                        <option value="RUSAK_BERAT">Rusak Berat</option>
+                        <option value="RUSAK">Rusak</option>
                       </select>
+                    </div>
+
+                    {/* Upload Foto Bukti (Opsional) - selalu tampil per item */}
+                    <div className="border border-dashed border-gray-300 rounded-xl p-3 bg-white">
+                      <p className="text-xs text-gray-500 mb-2 flex items-center">
+                        <ImageIcon className="w-3 h-3 mr-1" />
+                        Foto Bukti Kondisi (opsional)
+                      </p>
+                      {evidenceFiles[item.id] ? (
+                        <div className="relative">
+                          <img
+                            src={URL.createObjectURL(evidenceFiles[item.id])}
+                            alt="Preview bukti"
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = { ...evidenceFiles };
+                              delete updated[item.id];
+                              setEvidenceFiles(updated);
+                            }}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                          <Upload className="w-5 h-5 text-gray-400 mb-1" />
+                          <span className="text-xs text-gray-500">Pilih foto bukti</span>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files[0]) {
+                                setEvidenceFiles(prev => ({
+                                  ...prev,
+                                  [item.id]: e.target.files[0]
+                                }));
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -357,29 +428,7 @@ const ReturnPage = () => {
             )}
 
             <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rating (1-5)
-                </label>
-                <div className="flex items-center space-x-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setReturnData({ ...returnData, rating: star })}
-                      className="focus:outline-none"
-                    >
-                      <Star
-                        className={`w-8 h-8 ${
-                          star <= returnData.rating
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-                
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Catatan (opsional)
@@ -403,9 +452,9 @@ const ReturnPage = () => {
                   setSelectedLoan(null);
                   setReturnData({
                     device_condition_on_return: 'BAIK',
-                    return_notes: '',
-                    rating: 5
+                    return_notes: ''
                   });
+                  setEvidenceFiles({});
                 }}
                 disabled={submitting}
                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-xl transition-colors disabled:opacity-50"

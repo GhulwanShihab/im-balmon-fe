@@ -173,7 +173,7 @@ const EditUser = () => {
             <div>
               <h1 className="text-3xl font-bold text-slate-800">Edit Pengguna</h1>
               <p className="text-slate-500 mt-1">
-                Ubah informasi untuk <span className="font-semibold text-slate-700">{user.username}</span>
+                Ubah informasi untuk <span className="font-semibold text-slate-700">{user.nama}</span>
               </p>
             </div>
           </div>

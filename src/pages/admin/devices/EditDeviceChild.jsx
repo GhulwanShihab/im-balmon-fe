@@ -12,6 +12,7 @@ const EditDeviceChild = () => {
   const [photos, setPhotos] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [existingPhotos, setExistingPhotos] = useState([]);
+  const [locations, setLocations] = useState([]);
 
   const [device, setDevice] = useState({
     device_name: '',
@@ -31,7 +32,23 @@ const EditDeviceChild = () => {
 
   useEffect(() => {
     fetchDeviceChild();
+    fetchLocations();
   }, [id]);
+
+  const fetchLocations = async () => {
+    try {
+      const res = await apiClient.get('/locations/');
+      const data = Array.isArray(res.data) ? res.data : [];
+      setLocations(data);
+    } catch (err) {
+      console.error('❌ Gagal mengambil daftar lokasi:', err);
+      setLocations([]);
+    }
+  };
+
+  // Stations and rooms from locations API (filtered by type)
+  const stations = locations.filter(loc => loc.type === 'STASIUN');
+  const rooms = locations.filter(loc => loc.type === 'RUANGAN');
 
   const fetchDeviceChild = async () => {
     try {
@@ -150,8 +167,32 @@ const EditDeviceChild = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Lokasi & Penempatan</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField label="Stasiun" field="device_station" value={device.device_station} onChange={handleInputChange} />
-            <InputField label="Ruangan" field="device_room" value={device.device_room} onChange={handleInputChange} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Stasiun</label>
+              <select
+                value={device.device_station || ''}
+                onChange={(e) => handleInputChange('device_station', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="">-- Pilih Stasiun --</option>
+                {stations.map((loc) => (
+                  <option key={loc.id} value={loc.name}>{loc.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Ruangan</label>
+              <select
+                value={device.device_room || ''}
+                onChange={(e) => handleInputChange('device_room', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="">-- Pilih Ruangan --</option>
+                {rooms.map((loc) => (
+                  <option key={loc.id} value={loc.name}>{loc.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -167,8 +208,8 @@ const EditDeviceChild = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="BAIK">Baik</option>
-                <option value="RUSAK_RINGAN">Rusak Ringan</option>
-                <option value="RUSAK_BERAT">Rusak Berat</option>
+                <option value="RUSAK">Rusak</option>
+                <option value="MAINTENANCE">Maintenance</option>
               </select>
             </div>
             <div>

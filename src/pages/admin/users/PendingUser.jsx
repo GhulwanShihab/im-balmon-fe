@@ -150,10 +150,10 @@ const PendingUsers = () => {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            {u.username?.[0]?.toUpperCase() || "U"}
+                            {u.nama?.[0]?.toUpperCase() || "U"}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-medium text-slate-800 truncate">{u.username}</p>
+                            <p className="font-medium text-slate-800 truncate">{u.nama}</p>
                             <p className="text-xs text-slate-500 md:hidden truncate">{u.email}</p>
                           </div>
                         </div>

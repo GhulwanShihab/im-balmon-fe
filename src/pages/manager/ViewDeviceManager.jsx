@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Eye, QrCode } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Eye } from 'lucide-react';
 import apiClient from '../../services/api';
 import { getMediaUrl } from '../../config/api';
-import QRCodeGenerator from '../../components/QRCodeGenerator';
+
 
 const ViewDeviceManager = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showQRModal, setShowQRModal] = useState(false);
+
 
   useEffect(() => {
     fetchDevice();
@@ -25,7 +25,7 @@ const ViewDeviceManager = () => {
       const normalizedDevice = {
         ...deviceData,
         device_status: deviceData.device_status?.toUpperCase?.() || "TERSEDIA",
-        device_condition: deviceData.device_condition?.toLowerCase?.() || "baik",
+        device_condition: deviceData.device_condition?.toUpperCase?.() || "BAIK",
       };
 
       setDevice(normalizedDevice);
@@ -56,17 +56,16 @@ const ViewDeviceManager = () => {
   };
 
   const conditionBadge = (condition) => {
-    switch (condition) {
-      case "baik":
+    const c = condition?.toUpperCase?.();
+    switch (c) {
+      case "BAIK":
         return { label: "Baik", color: "bg-green-100 text-green-800" };
-      case "rusak_ringan":
-        return { label: "Rusak Ringan", color: "bg-yellow-100 text-yellow-800" };
-      case "rusak_berat":
-        return { label: "Rusak Berat", color: "bg-red-100 text-red-800" };
-      case "hilang":
-        return { label: "Hilang", color: "bg-gray-200 text-gray-700" };
+      case "RUSAK":
+        return { label: "Rusak", color: "bg-red-100 text-red-800" };
+      case "MAINTENANCE":
+        return { label: "Maintenance", color: "bg-sky-100 text-sky-800" };
       default:
-        return { label: "Tidak Diketahui", color: "bg-gray-100 text-gray-600" };
+        return { label: condition || "Tidak Diketahui", color: "bg-gray-100 text-gray-600" };
     }
   };
 
@@ -109,15 +108,7 @@ const ViewDeviceManager = () => {
           </div>
         </div>
         
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setShowQRModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
-          >
-            <QrCode className="w-4 h-4" />
-            <span>QR Code</span>
-          </button>
-        </div>
+
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -291,12 +282,7 @@ const ViewDeviceManager = () => {
         </div>
       )}
 
-      {/* QR Code Modal */}
-      <QRCodeGenerator
-        device={device}
-        isOpen={showQRModal}
-        onClose={() => setShowQRModal(false)}
-      />
+
     </div>
   );
 };

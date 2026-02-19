@@ -9,6 +9,7 @@ const AddDevice = () => {
   const [photos, setPhotos] = useState([]); // 🆕 file list
   const [previews, setPreviews] = useState([]); // 🆕 preview URLs
   const [devices, setDevices] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [device, setDevice] = useState({
     device_name: '',
     device_code: '',
@@ -18,7 +19,7 @@ const AddDevice = () => {
     device_year: new Date().getFullYear(),
     device_type: '',
     device_station: '',
-    device_condition: 'baik',
+    device_condition: 'BAIK',
     device_status: 'TERSEDIA',
     device_room: '',
     description: '',
@@ -49,6 +50,25 @@ const AddDevice = () => {
   
     fetchDevices();
   }, []);
+
+  // 🆕 Ambil daftar lokasi untuk dropdown
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await apiClient.get('/locations/');
+        const data = Array.isArray(res.data) ? res.data : [];
+        setLocations(data);
+      } catch (err) {
+        console.error('❌ Gagal mengambil daftar lokasi:', err);
+        setLocations([]);
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  // Stations and rooms from locations API (filtered by type)
+  const stations = locations.filter(loc => loc.type === 'STASIUN');
+  const rooms = locations.filter(loc => loc.type === 'RUANGAN');
 
 
   const handleInputChange = (field, value) => {
@@ -241,26 +261,32 @@ const AddDevice = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Stasiun Perangkat
               </label>
-              <input
-                type="text"
+              <select
                 value={device.device_station}
                 onChange={(e) => handleInputChange('device_station', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Masukkan Stasiun Perangkat"
-              />
+              >
+                <option value="">-- Pilih Stasiun --</option>
+                {stations.map((loc) => (
+                  <option key={loc.id} value={loc.name}>{loc.name}</option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Ruangan
               </label>
-              <input
-                type="text"
+              <select
                 value={device.device_room}
                 onChange={(e) => handleInputChange('device_room', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Masukkan Ruangan Tempat Perangkat"
-              />
+              >
+                <option value="">-- Pilih Ruangan --</option>
+                {rooms.map((loc) => (
+                  <option key={loc.id} value={loc.name}>{loc.name}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -282,10 +308,9 @@ const AddDevice = () => {
                 onChange={(e) => handleInputChange('device_condition', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               >
-                <option value="baik">Baik</option>
-                <option value="rusak_ringan">Rusak Ringan</option>
-                <option value="rusak_berat">Rusak Berat</option>
-                <option value="hilang">Hilang</option>
+                <option value="BAIK">Baik</option>
+                <option value="RUSAK">Rusak</option>
+                <option value="MAINTENANCE">Maintenance</option>
               </select>
             </div>
 

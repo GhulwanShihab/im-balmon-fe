@@ -6,8 +6,10 @@ import apiClient from '../services/api';
 
 const Registrasi = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    nama: '',
     email: '',
+    nip: '',
+    jabatan: '',
     password: '',
     confirmPassword: ''
   });
@@ -26,7 +28,7 @@ const Registrasi = () => {
   };
 
   const validateStep1 = () => {
-    return formData.username && formData.email;
+    return formData.nama && formData.email;
   };
 
   const validateStep2 = () => {
@@ -53,7 +55,9 @@ const Registrasi = () => {
       const response = await apiClient.post('/auth/register', {
         email: formData.email,
         password: formData.password,
-        username: formData.username,
+        nama: formData.nama,
+        nip: formData.nip || null,
+        jabatan: formData.jabatan || null,
       });
 
       toast.success(response.data.detail || 'Registrasi berhasil! Tunggu persetujuan admin.');
@@ -125,10 +129,10 @@ const Registrasi = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {step === 1 && (
                 <>
-                  {/* username */}
+                  {/* Nama Lengkap */}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
-                      Username
+                      Nama Lengkap
                     </label>
                     <div className="relative group">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
@@ -136,10 +140,10 @@ const Registrasi = () => {
                       </div>
                       <input
                         type="text"
-                        name="username"
-                        value={formData.username}
+                        name="nama"
+                        value={formData.nama}
                         onChange={handleInputChange}
-                        placeholder="Masukkan username"
+                        placeholder="Masukkan nama lengkap"
                         required
                         className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 text-gray-900 placeholder-gray-500"
                       />
@@ -162,6 +166,46 @@ const Registrasi = () => {
                         onChange={handleInputChange}
                         placeholder="Masukkan email"
                         required
+                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 text-gray-900 placeholder-gray-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* NIP (Opsional) */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      NIP <span className="text-gray-400 font-normal">(Opsional)</span>
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
+                        <User className="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+                      </div>
+                      <input
+                        type="text"
+                        name="nip"
+                        value={formData.nip}
+                        onChange={handleInputChange}
+                        placeholder="Masukkan NIP (jika ada)"
+                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 text-gray-900 placeholder-gray-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Jabatan (Opsional) */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Jabatan <span className="text-gray-400 font-normal">(Opsional)</span>
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
+                        <Shield className="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+                      </div>
+                      <input
+                        type="text"
+                        name="jabatan"
+                        value={formData.jabatan}
+                        onChange={handleInputChange}
+                        placeholder="Masukkan jabatan (jika ada)"
                         className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 text-gray-900 placeholder-gray-500"
                       />
                     </div>

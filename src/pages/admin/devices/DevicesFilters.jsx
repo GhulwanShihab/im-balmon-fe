@@ -25,10 +25,9 @@ const DevicesFilters = ({ searchTerm, setSearchTerm, filters, setFilters }) => (
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Semua Kondisi</option>
-          <option value="baik">Baik</option>
-          <option value="rusak_ringan">Rusak Ringan</option>
-          <option value="rusak_berat">Rusak Berat</option>
-          <option value="hilang">Hilang</option>
+          <option value="BAIK">Baik</option>
+          <option value="RUSAK">Rusak</option>
+          <option value="MAINTENANCE">Maintenance</option>
         </select>
 
         <select

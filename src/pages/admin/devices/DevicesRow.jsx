@@ -1,5 +1,85 @@
-import { Eye, Edit2, Trash2, QrCode, ChevronDown, ChevronRight } from "lucide-react";
+import { Eye, Edit2, Trash2, QrCode, ChevronDown, ChevronRight, ImageOff, MapPin, DoorOpen } from "lucide-react";
 import { useState } from "react";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+const DevicePhoto = ({ photosUrl, name, size = "md" }) => {
+  const [imgError, setImgError] = useState(false);
+  const sizeClasses = {
+    sm: "w-8 h-8 min-w-[32px]",
+    md: "w-10 h-10 min-w-[40px]",
+  };
+
+  const firstPhoto =
+    Array.isArray(photosUrl) && photosUrl.length > 0 ? photosUrl[0] : null;
+
+  if (!firstPhoto || imgError) {
+    return (
+      <div className={`${sizeClasses[size]} rounded-lg bg-gray-100 flex items-center justify-center`}>
+        <ImageOff className="w-4 h-4 text-gray-300" />
+      </div>
+    );
+  }
+
+  const photoSrc = firstPhoto.startsWith("http")
+    ? firstPhoto
+    : `${API_BASE}${firstPhoto}`;
+
+  return (
+    <img
+      src={photoSrc}
+      alt={name}
+      className={`${sizeClasses[size]} rounded-lg object-cover border border-gray-200`}
+      onError={() => setImgError(true)}
+    />
+  );
+};
+
+const ConditionBadge = ({ condition }) => {
+  const c = condition?.toUpperCase();
+  const styles = {
+    BAIK: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+    RUSAK: "bg-red-50 text-red-700 ring-red-600/20",
+    MAINTENANCE: "bg-amber-50 text-amber-700 ring-amber-600/20",
+  };
+  const labels = { BAIK: "Baik", RUSAK: "Rusak", MAINTENANCE: "Maintenance" };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset ${styles[c] || "bg-gray-50 text-gray-600 ring-gray-500/10"}`}>
+      {labels[c] || condition || "-"}
+    </span>
+  );
+};
+
+const StatusBadge = ({ status }) => {
+  const styles = {
+    TERSEDIA: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+    DIPINJAM: "bg-blue-50 text-blue-700 ring-blue-600/20",
+    MAINTENANCE: "bg-amber-50 text-amber-700 ring-amber-600/20",
+    NONAKTIF: "bg-gray-100 text-gray-600 ring-gray-500/10",
+  };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset ${styles[status] || "bg-gray-50 text-gray-600 ring-gray-500/10"}`}>
+      {status || "-"}
+    </span>
+  );
+};
+
+const ActionButtons = ({ onView, onEdit, onDelete, onQR }) => (
+  <div className="flex items-center justify-end space-x-1">
+    <button onClick={onQR} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition" title="QR Code">
+      <QrCode className="w-4 h-4" />
+    </button>
+    <button onClick={onView} className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition" title="Lihat">
+      <Eye className="w-4 h-4" />
+    </button>
+    <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="Edit">
+      <Edit2 className="w-4 h-4" />
+    </button>
+    <button onClick={onDelete} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="Hapus">
+      <Trash2 className="w-4 h-4" />
+    </button>
+  </div>
+);
 
 const DevicesRow = ({ device, navigate, onDelete, onGenerateQR }) => {
   const [expanded, setExpanded] = useState(false);
@@ -7,225 +87,154 @@ const DevicesRow = ({ device, navigate, onDelete, onGenerateQR }) => {
 
   return (
     <>
-      {/* ROW UTAMA */}
-      <tr
-        className={`hover:bg-gray-50 ${hasChildren ? "bg-gray-100" : ""}`}
-      >
-        <td className="px-4 py-4">
-          <div className="flex items-center space-x-2">
-            {hasChildren && (
+      {/* PARENT ROW */}
+      <tr className={`hover:bg-gray-50 transition-colors ${hasChildren ? "bg-slate-50/50" : ""}`}>
+        {/* Perangkat — Photo + Name */}
+        <td className="px-4 py-3">
+          <div className="flex items-center space-x-3">
+            {hasChildren ? (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="text-gray-500 hover:text-gray-700 transition"
-                title={expanded ? "Sembunyikan anak perangkat" : "Tampilkan anak perangkat"}
+                className="p-0.5 text-gray-400 hover:text-gray-700 transition"
               >
-                {expanded ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
+                {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>
+            ) : (
+              <DevicePhoto photosUrl={device.photos_url} name={device.device_name} />
             )}
-            <div>
-              <div className="text-sm font-semibold text-gray-900">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-gray-900 truncate">
                 {device.device_name}
               </div>
               {hasChildren ? (
-                <div className="text-xs text-gray-500 italic">
+                <div className="text-xs text-emerald-600 font-medium">
                   {device.children.length} perangkat anak
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">{device.device_type}</div>
+                <div className="text-xs text-gray-400">{device.device_type || "-"}</div>
               )}
             </div>
           </div>
         </td>
 
-        {/* Kolom tambahan hanya jika TIDAK punya anak */}
-        {!hasChildren && (
+        {!hasChildren ? (
           <>
-            <td className="px-4 py-4">
-              <div className="text-sm text-gray-900">{device.device_code}</div>
-              <div className="text-sm text-gray-500">{device.nup_device}</div>
+            {/* Kode / NUP */}
+            <td className="px-4 py-3">
+              <div className="text-sm font-mono text-gray-900">{device.device_code}</div>
+              <div className="text-xs text-gray-400">NUP: {device.nup_device}</div>
             </td>
-            <td className="px-4 py-4 text-sm text-gray-900">
-              {device.bmn_brand || device.sample_brand}
+            {/* Brand */}
+            <td className="px-4 py-3 text-sm text-gray-700">
+              {device.bmn_brand || device.sample_brand || "-"}
             </td>
-            <td className="px-4 py-4">
-              <span
-                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  device.device_condition === "baik"
-                    ? "bg-green-100 text-green-800"
-                    : device.device_condition === "rusak_ringan"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : device.device_condition === "hilang"
-                    ? "bg-purple-100 text-purple-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {device.device_condition === "baik"
-                  ? "Baik"
-                  : device.device_condition === "rusak_ringan"
-                  ? "Rusak Ringan"
-                  : device.device_condition === "rusak_berat"
-                  ? "Rusak Berat"
-                  : device.device_condition === "hilang"
-                  ? "Hilang"
-                  : device.device_condition}
-              </span>
+            {/* Kondisi */}
+            <td className="px-4 py-3">
+              <ConditionBadge condition={device.device_condition} />
             </td>
-            <td className="px-4 py-4">
-              <span
-                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  device.device_status === "TERSEDIA"
-                    ? "bg-green-100 text-green-800"
-                    : device.device_status === "DIPINJAM"
-                    ? "bg-blue-100 text-blue-800"
-                    : device.device_status === "MAINTENANCE"
-                    ? "bg-orange-100 text-orange-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {device.device_status}
-              </span>
+            {/* Status */}
+            <td className="px-4 py-3">
+              <StatusBadge status={device.device_status} />
             </td>
-            <td className="px-4 py-4 text-sm text-gray-900">
-              {device.device_room || "-"}
-            </td>
-            <td className="px-4 py-4 text-right">
-              <div className="flex items-center justify-end space-x-2">
-                <button
-                  onClick={() => onGenerateQR(device)}
-                  className="p-1 text-purple-600 hover:text-purple-800"
-                  title="Generate QR Code"
-                >
-                  <QrCode className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => navigate(`/admin/devices/${device.id}/view`)}
-                  className="p-1 text-green-600 hover:text-green-800"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => navigate(`/admin/devices/${device.id}/edit`)}
-                  className="p-1 text-blue-600 hover:text-blue-800"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => onDelete(device.id, false)}
-                  className="p-1 text-red-600 hover:text-red-800"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+            {/* Lokasi */}
+            <td className="px-4 py-3">
+              <div className="space-y-0.5">
+                {device.device_station && (
+                  <div className="flex items-center text-xs text-gray-600">
+                    <MapPin className="w-3 h-3 mr-1 text-gray-400" />
+                    {device.device_station}
+                  </div>
+                )}
+                {device.device_room && (
+                  <div className="flex items-center text-xs text-gray-600">
+                    <DoorOpen className="w-3 h-3 mr-1 text-gray-400" />
+                    {device.device_room}
+                  </div>
+                )}
+                {!device.device_station && !device.device_room && (
+                  <span className="text-xs text-gray-400">-</span>
+                )}
               </div>
             </td>
+            {/* Aksi */}
+            <td className="px-4 py-3">
+              <ActionButtons
+                onQR={() => onGenerateQR(device)}
+                onView={() => navigate(`/admin/devices/${device.id}/view`)}
+                onEdit={() => navigate(`/admin/devices/${device.id}/edit`)}
+                onDelete={() => onDelete(device.id, false)}
+              />
+            </td>
           </>
+        ) : (
+          /* Collapsed parent — span empty cells */
+          <td colSpan={6}></td>
         )}
       </tr>
 
-      {/* ROW ANAK */}
-      {hasChildren && expanded && (
-        <tr className="transition-all duration-300 ease-in-out">
-          <td colSpan="7" className="p-0 bg-gray-50">
-            <div className="overflow-hidden transition-all duration-300 ease-in-out">
-              <table className="min-w-full border-t border-gray-200">
-                <tbody>
-                  {device.children.map((child) => (
-                    <tr
-                      key={child.id}
-                      className="hover:bg-gray-100 border-b last:border-none bg-gray-50"
-                    >
-                      <td className="px-10 py-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {child.device_name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {child.device_type}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {child.device_code}
-                        <div className="text-xs text-gray-500">{child.nup_device}</div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {child.bmn_brand || child.sample_brand}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            child.device_condition === "baik"
-                              ? "bg-green-100 text-green-800"
-                              : child.device_condition === "rusak_ringan"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : child.device_condition === "hilang"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {child.device_condition}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            child.device_status === "TERSEDIA"
-                              ? "bg-green-100 text-green-800"
-                              : child.device_status === "DIPINJAM"
-                              ? "bg-blue-100 text-blue-800"
-                              : child.device_status === "MAINTENANCE"
-                              ? "bg-orange-100 text-orange-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {child.device_status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {child.device_room || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => onGenerateQR(child)}
-                            className="p-1 text-purple-600 hover:text-purple-800"
-                            title="Generate QR Code"
-                          >
-                            <QrCode className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              navigate(`/admin/devices/${child.id}/view-child`)
-                            }
-                            className="p-1 text-green-600 hover:text-green-800"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              navigate(`/admin/devices/${child.id}/edit-child`)
-                            }
-                            className="p-1 text-blue-600 hover:text-blue-800"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => onDelete(child.id, true)}
-                            className="p-1 text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* CHILDREN ROWS */}
+      {hasChildren && expanded && device.children.map((child) => (
+        <tr key={child.id} className="hover:bg-blue-50/30 bg-slate-50 transition-colors border-l-2 border-emerald-300">
+          {/* Perangkat — Photo + Name (indented) */}
+          <td className="px-4 py-2.5">
+            <div className="flex items-center space-x-3 ml-6">
+              <DevicePhoto photosUrl={child.photos_url} name={child.device_name} size="sm" />
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-gray-800 truncate">
+                  {child.device_name}
+                </div>
+                <div className="text-xs text-gray-400">{child.device_type || "-"}</div>
+              </div>
             </div>
           </td>
+          {/* Kode / NUP */}
+          <td className="px-4 py-2.5">
+            <div className="text-sm font-mono text-gray-700">{child.device_code}</div>
+            <div className="text-xs text-gray-400">NUP: {child.nup_device}</div>
+          </td>
+          {/* Brand */}
+          <td className="px-4 py-2.5 text-sm text-gray-600">
+            {child.bmn_brand || child.sample_brand || "-"}
+          </td>
+          {/* Kondisi */}
+          <td className="px-4 py-2.5">
+            <ConditionBadge condition={child.device_condition} />
+          </td>
+          {/* Status */}
+          <td className="px-4 py-2.5">
+            <StatusBadge status={child.device_status} />
+          </td>
+          {/* Lokasi */}
+          <td className="px-4 py-2.5">
+            <div className="space-y-0.5">
+              {child.device_station && (
+                <div className="flex items-center text-xs text-gray-500">
+                  <MapPin className="w-3 h-3 mr-1 text-gray-400" />
+                  {child.device_station}
+                </div>
+              )}
+              {child.device_room && (
+                <div className="flex items-center text-xs text-gray-500">
+                  <DoorOpen className="w-3 h-3 mr-1 text-gray-400" />
+                  {child.device_room}
+                </div>
+              )}
+              {!child.device_station && !child.device_room && (
+                <span className="text-xs text-gray-400">-</span>
+              )}
+            </div>
+          </td>
+          {/* Aksi */}
+          <td className="px-4 py-2.5">
+            <ActionButtons
+              onQR={() => onGenerateQR(child)}
+              onView={() => navigate(`/admin/devices/${child.id}/view-child`)}
+              onEdit={() => navigate(`/admin/devices/${child.id}/edit-child`)}
+              onDelete={() => onDelete(child.id, true)}
+            />
+          </td>
         </tr>
-      )}
+      ))}
     </>
   );
 };

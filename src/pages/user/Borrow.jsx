@@ -17,6 +17,7 @@ import {
   Search
 } from 'lucide-react';
 import apiClient from '../../services/api';
+import DeviceImage from '../../components/DeviceImage';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -39,7 +40,8 @@ const BorrowPage = () => {
   const [loading, setLoading] = useState(false);
   const [availableDevices, setAvailableDevices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [conditionFilter, setConditionFilter] = useState('');
+  const [stationFilter, setStationFilter] = useState('');
+  const [roomFilter, setRoomFilter] = useState('');
   const [employees, setEmployees] = useState([]);
   const [employeeLoading, setEmployeeLoading] = useState(false);
   const scannerRef = useRef(null);
@@ -96,9 +98,30 @@ const BorrowPage = () => {
     const matchesSearch =
       device.device_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       device.device_code?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCondition = conditionFilter ? device.device_condition === conditionFilter : true;
-    return matchesSearch && matchesCondition;
+    const matchesStation = stationFilter ? device.device_station === stationFilter : true;
+    const matchesRoom = roomFilter ? device.device_room === roomFilter : true;
+    return matchesSearch && matchesStation && matchesRoom;
+  }).sort((a, b) => {
+    const statusA = (a.device_status || '').toUpperCase();
+    const statusB = (b.device_status || '').toUpperCase();
+    
+    // Prioritize TERSEDIA
+    if (statusA === 'TERSEDIA' && statusB !== 'TERSEDIA') return -1;
+    if (statusA !== 'TERSEDIA' && statusB === 'TERSEDIA') return 1;
+    
+    return 0;
   });
+
+  // Get unique locations for One-Way Logic or just simple unique lists
+  const stations = [...new Set(availableDevices.map(d => d.device_station).filter(Boolean))].sort();
+  // If a station is selected, only show rooms for that station? Or just all rooms?
+  // Let's show all rooms relevant to the current station filter if selected, otherwise all rooms.
+  const rooms = [...new Set(
+    availableDevices
+      .filter(d => !stationFilter || d.device_station === stationFilter)
+      .map(d => d.device_room)
+      .filter(Boolean)
+  )].sort();
 
   const startQRScanner = () => {
     setIsScanning(true);
@@ -427,16 +450,30 @@ const BorrowPage = () => {
                 </div>
               </div>
 
-              <div className="sm:w-48">
+              <div className="flex flex-col sm:flex-row gap-4 sm:w-auto w-full">
                 <select
-                  value={conditionFilter}
-                  onChange={(e) => setConditionFilter(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
+                  value={stationFilter}
+                  onChange={(e) => {
+                    setStationFilter(e.target.value);
+                    setRoomFilter(''); // Reset room when station changes to avoid invalid combos
+                  }}
+                  className="w-full sm:w-40 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
                 >
-                  <option value="">Semua Kondisi</option>
-                  <option value="baik">Baik</option>
-                  <option value="rusak_ringan">Rusak Ringan</option>
-                  <option value="rusak_berat">Rusak Berat</option>
+                  <option value="">Semua Stasiun</option>
+                  {stations.map(station => (
+                    <option key={station} value={station}>{station}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={roomFilter}
+                  onChange={(e) => setRoomFilter(e.target.value)}
+                  className="w-full sm:w-40 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
+                >
+                  <option value="">Semua Ruangan</option>
+                  {rooms.map(room => (
+                    <option key={room} value={room}>{room}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -459,34 +496,41 @@ const BorrowPage = () => {
                       className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden"
                     >
                       {/* HEADER DEVICE */}
-                      <div className="p-3 sm:p-4 flex items-center justify-between">
-                        <div className="flex items-start space-x-3">
-                          {hasChildren && (
-                            <button
-                              onClick={() => toggleExpand(device.id)}
-                              className="text-gray-500 hover:text-gray-700"
-                            >
-                              {expanded ? (
-                                <ChevronDown className="w-4 h-4" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4" />
-                              )}
-                            </button>
-                          )}
-
-                          <div>
-                            <h3 className="font-semibold text-gray-900 text-sm mb-1">
-                              {device.device_name}
-                            </h3>
-                            <p className="text-xs text-gray-500">
-                              {device.device_code} • {device.nup_device}
-                            </p>
-                            {!hasChildren && (
-                              <p className="text-xs text-gray-400 italic">
-                                {device.device_type}
-                              </p>
+                      <div className="p-3 sm:p-4 flex items-center gap-3">
+                        {/* Expand button for devices with children */}
+                        {hasChildren && (
+                          <button
+                            onClick={() => toggleExpand(device.id)}
+                            className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+                          >
+                            {expanded ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4" />
                             )}
-                          </div>
+                          </button>
+                        )}
+
+                        {/* Device Image */}
+                        <DeviceImage 
+                          photos={device.photos_url} 
+                          name={device.device_name} 
+                          size="sm" 
+                        />
+
+                        {/* Device Info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 text-sm truncate">
+                            {device.device_name}
+                          </h3>
+                          <p className="text-xs text-gray-500 truncate">
+                            {device.device_code} • {device.nup_device}
+                          </p>
+                          {!hasChildren && device.device_type && (
+                            <p className="text-xs text-gray-400 italic truncate">
+                              {device.device_type}
+                            </p>
+                          )}
                         </div>
                           
                         {/* Jika tidak punya anak, tampilkan status + tombol */}
@@ -561,13 +605,18 @@ const BorrowPage = () => {
               
               <div className="space-y-3">
                 {selectedDevices.map((device) => (
-                  <div key={device.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-200">
-                    <div className="flex items-center space-x-3 min-w-0 flex-1">
-                      <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{device.device_name}</h3>
-                        <p className="text-xs sm:text-sm text-gray-500 truncate">{device.device_code}</p>
-                      </div>
+                  <div key={device.id} className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
+                    {/* Device Image */}
+                    <DeviceImage 
+                      photos={device.photos_url} 
+                      name={device.device_name} 
+                      size="xs" 
+                    />
+                    
+                    {/* Device Info */}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{device.device_name}</h3>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">{device.device_code}</p>
                     </div>
                     <button
                       onClick={() => removeSelectedDevice(device.__key)}

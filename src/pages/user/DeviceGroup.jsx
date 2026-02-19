@@ -18,6 +18,7 @@ import {
   User
 } from 'lucide-react';
 import apiClient from '../../services/api';
+import DeviceImage from '../../components/DeviceImage';
 import toast from 'react-hot-toast';
 
 const DeviceGroupsPage = () => {
@@ -625,18 +626,28 @@ const DeviceGroupsPage = () => {
                   const status = (device.device_status || '').toUpperCase();
 
                   return (
-                    <div key={device.id} className="border border-gray-200 rounded-xl overflow-hidden">
-                      <div className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1">
-                          <Package className="w-5 h-5 text-green-500" />
-                          <div>
-                            <h4 className="font-semibold text-gray-900">{device.device_name}</h4>
-                            <p className="text-sm text-gray-500">
-                              {device.device_code} • {device.nup_device}
-                            </p>
-                          </div>
+                    <div key={device.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+                        {/* Device Image */}
+                        <DeviceImage 
+                          photos={device.photos_url} 
+                          name={device.device_name} 
+                          size="md" 
+                        />
+                        
+                        {/* Device Info */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 truncate">{device.device_name}</h4>
+                          <p className="text-sm text-gray-500 truncate">
+                            {device.device_code} • {device.nup_device}
+                          </p>
+                          {device.device_type && (
+                            <p className="text-xs text-gray-400 mt-0.5">{device.device_type}</p>
+                          )}
                         </div>
-                        <span className={`text-xs px-2.5 py-1 rounded ${
+                        
+                        {/* Status Badge */}
+                        <span className={`text-xs px-2.5 py-1 rounded flex-shrink-0 ${
                           status === 'TERSEDIA'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-600'

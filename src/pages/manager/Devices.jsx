@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, QrCode, Search, ChevronLeft, ChevronRight, FileDown } from "lucide-react";
+import { Eye, Search, ChevronLeft, ChevronRight, FileDown } from "lucide-react";
 import apiClient from "../../services/api";
-import QRCodeGenerator from "../../components/QRCodeGenerator";
+
 
 const ManagerDevices = () => {
   const navigate = useNavigate();
@@ -11,8 +11,7 @@ const ManagerDevices = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [showQRModal, setShowQRModal] = useState(false);
-  const [selectedDeviceForQR, setSelectedDeviceForQR] = useState(null);
+
   const [filters, setFilters] = useState({
     device_type: "",
     device_condition: "",
@@ -58,7 +57,7 @@ const ManagerDevices = () => {
         ? devicesData.map((d) => ({
             ...d,
             device_status: d.device_status?.toUpperCase?.() || "TERSEDIA",
-            device_condition: d.device_condition?.toLowerCase?.() || "baik",
+            device_condition: d.device_condition?.toUpperCase?.() || "BAIK",
           }))
         : [];
 
@@ -171,23 +170,23 @@ const ManagerDevices = () => {
     };
 
     const getConditionBadge = (condition) => {
+      const c = condition?.toUpperCase?.();
       const badges = {
-        baik: "bg-green-100 text-green-800",
-        rusak_ringan: "bg-yellow-100 text-yellow-800",
-        rusak_berat: "bg-red-100 text-red-800",
-        hilang: "bg-purple-100 text-purple-800",
+        BAIK: "bg-green-100 text-green-800",
+        RUSAK: "bg-red-100 text-red-800",
+        MAINTENANCE: "bg-sky-100 text-sky-800",
       };
-      return badges[condition] || "bg-gray-100 text-gray-800";
+      return badges[c] || "bg-gray-100 text-gray-800";
     };
 
     const getConditionLabel = (condition) => {
+      const c = condition?.toUpperCase?.();
       const labels = {
-        baik: "Baik",
-        rusak_ringan: "Rusak Ringan",
-        rusak_berat: "Rusak Berat",
-        hilang: "Hilang",
+        BAIK: "Baik",
+        RUSAK: "Rusak",
+        MAINTENANCE: "Maintenance",
       };
-      return labels[condition] || condition;
+      return labels[c] || condition || '-';
     };
 
     return (
@@ -254,16 +253,7 @@ const ManagerDevices = () => {
               </td>
               <td className="px-4 py-4 text-right">
                 <div className="flex items-center justify-end space-x-2">
-                  <button
-                    onClick={() => {
-                      setSelectedDeviceForQR(device);
-                      setShowQRModal(true);
-                    }}
-                    className="p-1 text-purple-600 hover:text-purple-800"
-                    title="Generate QR Code"
-                  >
-                    <QrCode className="w-4 h-4" />
-                  </button>
+
                   <button
                     onClick={() => navigate(`/manager/devices/${device.id}/view`)}
                     className="p-1 text-green-600 hover:text-green-800"
@@ -346,16 +336,7 @@ const ManagerDevices = () => {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => {
-                              setSelectedDeviceForQR(child);
-                              setShowQRModal(true);
-                            }}
-                            className="p-1 text-purple-600 hover:text-purple-800"
-                            title="Generate QR Code"
-                          >
-                            <QrCode className="w-4 h-4" />
-                          </button>
+
                           <button
                             onClick={() =>
                               navigate(`/manager/devices/${child.id}/view-child`)
@@ -429,10 +410,9 @@ const ManagerDevices = () => {
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="">Semua Kondisi</option>
-              <option value="baik">Baik</option>
-              <option value="rusak_ringan">Rusak Ringan</option>
-              <option value="rusak_berat">Rusak Berat</option>
-              <option value="hilang">Hilang</option>
+              <option value="BAIK">Baik</option>
+              <option value="RUSAK">Rusak</option>
+              <option value="MAINTENANCE">Maintenance</option>
             </select>
 
             <select
@@ -648,15 +628,7 @@ const ManagerDevices = () => {
         </div>
       )}
 
-      {/* QR Code Modal */}
-      <QRCodeGenerator
-        device={selectedDeviceForQR}
-        isOpen={showQRModal}
-        onClose={() => {
-          setShowQRModal(false);
-          setSelectedDeviceForQR(null);
-        }}
-      />
+
     </div>
   );
 };

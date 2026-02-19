@@ -36,8 +36,8 @@ const Dashboard = () => {
       in_use: 0, 
       maintenance: 0,
       good_condition: 0,
-      light_damage: 0,
-      heavy_damage: 0
+      damaged: 0,
+      maintenance_condition: 0
     },
     users: { 
       total: 0, 
@@ -136,8 +136,8 @@ const Dashboard = () => {
       // Count devices by condition
       const conditionCounts = {
         good_condition: 0,
-        light_damage: 0,
-        heavy_damage: 0,
+        damaged: 0,
+        maintenance_condition: 0,
         unknown: 0
       };
 
@@ -155,11 +155,11 @@ const Dashboard = () => {
           case 'BAIK':
             conditionCounts.good_condition++;
             break;
-          case 'RUSAK_RINGAN':
-            conditionCounts.light_damage++;
+          case 'RUSAK':
+            conditionCounts.damaged++;
             break;
-          case 'RUSAK_BERAT':
-            conditionCounts.heavy_damage++;
+          case 'MAINTENANCE':
+            conditionCounts.maintenance_condition++;
             break;
           default:
             console.warn(`⚠️ Unknown condition for device "${device.device_name}": "${condition}"`);
@@ -170,8 +170,8 @@ const Dashboard = () => {
       console.log('📊 Condition counts:', conditionCounts);
       console.log('📊 Breakdown:');
       console.log('   - BAIK:', conditionCounts.good_condition);
-      console.log('   - RUSAK_RINGAN:', conditionCounts.light_damage);
-      console.log('   - RUSAK_BERAT:', conditionCounts.heavy_damage);
+      console.log('   - RUSAK:', conditionCounts.damaged);
+      console.log('   - MAINTENANCE:', conditionCounts.maintenance_condition);
       console.log('   - Unknown/Empty:', conditionCounts.unknown);
 
       // Count devices by status
@@ -193,8 +193,8 @@ const Dashboard = () => {
         maintenance: statusCounts.maintenance,
         // Use calculated condition counts
         good_condition: conditionCounts.good_condition,
-        light_damage: conditionCounts.light_damage,
-        heavy_damage: conditionCounts.heavy_damage
+        damaged: conditionCounts.damaged,
+        maintenance_condition: conditionCounts.maintenance_condition
       };
 
       console.log('✅ Final device stats:', parsedDeviceStats);
@@ -202,12 +202,12 @@ const Dashboard = () => {
       console.log('   Total devices:', parsedDeviceStats.total);
       console.log('   Sum of conditions:', 
         parsedDeviceStats.good_condition + 
-        parsedDeviceStats.light_damage + 
-        parsedDeviceStats.heavy_damage
+        parsedDeviceStats.damaged + 
+        parsedDeviceStats.maintenance_condition
       );
       console.log('   Condition match:', 
         parsedDeviceStats.total === 
-        (parsedDeviceStats.good_condition + parsedDeviceStats.light_damage + parsedDeviceStats.heavy_damage)
+        (parsedDeviceStats.good_condition + parsedDeviceStats.damaged + parsedDeviceStats.maintenance_condition)
           ? '✅ YES' 
           : '❌ NO - Unknown conditions: ' + conditionCounts.unknown
       );
@@ -390,16 +390,16 @@ const Dashboard = () => {
           />
           <StatCard 
             icon={AlertTriangle} 
-            title="Rusak Ringan" 
-            value={stats.devices.light_damage} 
-            subtitle="Perlu perawatan" 
+            title="Rusak" 
+            value={stats.devices.damaged} 
+            subtitle="Perlu perhatian" 
             color="orange" 
           />
           <StatCard 
-            icon={XCircle} 
-            title="Rusak Berat" 
-            value={stats.devices.heavy_damage} 
-            subtitle="Perlu perhatian" 
+            icon={Settings} 
+            title="Maintenance" 
+            value={stats.devices.maintenance_condition} 
+            subtitle="Dalam perawatan" 
             color="red" 
           />
         </div>
@@ -526,15 +526,15 @@ const Dashboard = () => {
               </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-              <span className="text-sm text-gray-600">Rusak Ringan</span>
+              <span className="text-sm text-gray-600">Rusak</span>
               <span className="text-sm font-bold text-orange-600">
-                {stats.devices.total > 0 ? ((stats.devices.light_damage / stats.devices.total) * 100).toFixed(1) : '0.0'}%
+                {stats.devices.total > 0 ? ((stats.devices.damaged / stats.devices.total) * 100).toFixed(1) : '0.0'}%
               </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-              <span className="text-sm text-gray-600">Rusak Berat</span>
+              <span className="text-sm text-gray-600">Maintenance</span>
               <span className="text-sm font-bold text-red-600">
-                {stats.devices.total > 0 ? ((stats.devices.heavy_damage / stats.devices.total) * 100).toFixed(1) : '0.0'}%
+                {stats.devices.total > 0 ? ((stats.devices.maintenance_condition / stats.devices.total) * 100).toFixed(1) : '0.0'}%
               </span>
             </div>
           </div>

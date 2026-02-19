@@ -106,11 +106,11 @@ const UserDetail = () => {
               <div className="flex items-center gap-4">
                 {/* Avatar */}
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-3xl shadow-lg">
-                  {user.username?.[0]?.toUpperCase() || "U"}
+                  {user.nama?.[0]?.toUpperCase() || "U"}
                 </div>
                 
                 <div>
-                  <h1 className="text-3xl font-bold text-slate-800">{user.username}</h1>
+                  <h1 className="text-3xl font-bold text-slate-800">{user.nama}</h1>
                   <p className="text-slate-500 mt-1">{user.email}</p>
                   <div className="flex items-center gap-2 mt-2">
                     {user.is_active ? (
@@ -159,7 +159,7 @@ const UserDetail = () => {
               Informasi Dasar
             </h2>
             <div className="space-y-4">
-              <InfoRow icon={<User size={18} />} label="Username" value={user.username} />
+              <InfoRow icon={<User size={18} />} label="Nama" value={user.nama} />
               <InfoRow icon={<Mail size={18} />} label="Email" value={user.email} />
               {/*<InfoRow
                 icon={<Calendar size={18} />}

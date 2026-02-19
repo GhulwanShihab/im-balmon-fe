@@ -112,9 +112,8 @@ const ViewLoanDetail = () => {
   const getConditionBadge = (condition) => {
     const conditionMap = {
       BAIK: { label: 'Baik', color: 'bg-green-100 text-green-800' },
-      RUSAK_RINGAN: { label: 'Rusak Ringan', color: 'bg-yellow-100 text-yellow-800' },
-      RUSAK_BERAT: { label: 'Rusak Berat', color: 'bg-red-100 text-red-800' },
-      HILANG: { label: 'Hilang', color: 'bg-gray-200 text-gray-700' }
+      RUSAK: { label: 'Rusak', color: 'bg-red-100 text-red-800' },
+      MAINTENANCE: { label: 'Maintenance', color: 'bg-sky-100 text-sky-800' },
     };
 
     const info = conditionMap[condition] || { label: condition || '-', color: 'bg-gray-100 text-gray-600' };

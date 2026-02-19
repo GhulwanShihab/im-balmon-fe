@@ -372,10 +372,10 @@ const ReportsPage = () => {
                             <p className="text-sm text-gray-900 mt-1">
                               {item.condition_before === "BAIK"
                                 ? "Baik"
-                                : item.condition_before === "RUSAK_RINGAN"
-                                ? "Rusak Ringan"
-                                : item.condition_before === "RUSAK_BERAT"
-                                ? "Rusak Berat"
+                                : item.condition_before === "RUSAK"
+                                ? "Rusak"
+                                : item.condition_before === "MAINTENANCE"
+                                ? "Maintenance"
                                 : "-"}
                             </p>
                           </div>
@@ -387,10 +387,10 @@ const ReportsPage = () => {
                               <p className="text-sm text-gray-900 mt-1">
                                 {item.condition_after === "BAIK"
                                   ? "Baik"
-                                  : item.condition_after === "RUSAK_RINGAN"
-                                  ? "Rusak Ringan"
-                                  : item.condition_after === "RUSAK_BERAT"
-                                  ? "Rusak Berat"
+                                  : item.condition_after === "RUSAK"
+                                  ? "Rusak"
+                                  : item.condition_after === "MAINTENANCE"
+                                  ? "Maintenance"
                                   : "-"}
                               </p>
                             </div>
@@ -486,10 +486,10 @@ const ReportsPage = () => {
                                 <p className="text-sm text-gray-900 mt-1">
                                   {item.condition_after === "BAIK"
                                     ? "Baik"
-                                    : item.condition_after === "RUSAK_RINGAN"
-                                    ? "Rusak Ringan"
-                                    : item.condition_after === "RUSAK_BERAT"
-                                    ? "Rusak Berat"
+                                    : item.condition_after === "RUSAK"
+                                    ? "Rusak"
+                                    : item.condition_after === "MAINTENANCE"
+                                    ? "Maintenance"
                                     : "-"}
                                 </p>
                               </div>

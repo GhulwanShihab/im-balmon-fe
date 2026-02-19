@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Eye, AlertTriangle, Clock, Package } from "lucide-react";
+import { CheckCircle, XCircle, Eye, AlertTriangle, Clock, Package, ImageIcon } from "lucide-react";
 import apiClient from "../../services/api";
+import { getMediaUrl } from "../../config/api";
 import toast from "react-hot-toast";
 
 const ManagerConditionApprovals = () => {
@@ -11,6 +12,8 @@ const ManagerConditionApprovals = () => {
   const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageModalUrl, setImageModalUrl] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
 
   useEffect(() => {
@@ -70,12 +73,11 @@ const ManagerConditionApprovals = () => {
 
   const getConditionBadge = (condition) => {
     const badges = {
-      'baik': { color: 'bg-green-100 text-green-800 border-green-200', label: 'Baik' },
-      'rusak_ringan': { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Rusak Ringan' },
-      'rusak_berat': { color: 'bg-red-100 text-red-800 border-red-200', label: 'Rusak Berat' },
-      'hilang': { color: 'bg-gray-100 text-gray-800 border-gray-200', label: 'Hilang' },
+      'BAIK': { color: 'bg-green-100 text-green-800 border-green-200', label: 'Baik' },
+      'RUSAK': { color: 'bg-red-100 text-red-800 border-red-200', label: 'Rusak' },
+      'MAINTENANCE': { color: 'bg-sky-100 text-sky-800 border-sky-200', label: 'Maintenance' },
     };
-    return badges[condition?.toLowerCase()] || { color: 'bg-blue-100 text-blue-800 border-blue-200', label: condition };
+    return badges[condition?.toUpperCase()] || { color: 'bg-gray-100 text-gray-800 border-gray-200', label: condition || '-' };
   };
 
   const getStatusBadge = (status) => {
@@ -140,6 +142,25 @@ const ManagerConditionApprovals = () => {
                 <p className="text-sm text-gray-900 mt-1 bg-gray-50 p-3 rounded-lg">
                   {request.reason || "-"}
                 </p>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <ImageIcon className="w-4 h-4 inline mr-1" />
+                  Foto Bukti
+                </label>
+                {request.evidence_photo_url ? (
+                  <img
+                    src={getMediaUrl(request.evidence_photo_url)}
+                    alt="Foto bukti"
+                    className="w-full max-w-sm h-48 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => {
+                      setImageModalUrl(getMediaUrl(request.evidence_photo_url));
+                      setShowImageModal(true);
+                    }}
+                  />
+                ) : (
+                  <p className="text-sm text-gray-400 mt-1">-</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Tanggal Pengajuan</label>
@@ -308,7 +329,7 @@ const ManagerConditionApprovals = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    {["Perangkat", "User", "Kondisi Lama", "Kondisi Baru", "Alasan", "Status", "Aksi"].map(
+                    {["Perangkat", "User", "Kondisi Lama", "Kondisi Baru", "Alasan", "Foto Bukti", "Status", "Aksi"].map(
                       (col) => (
                         <th
                           key={col}
@@ -362,6 +383,21 @@ const ManagerConditionApprovals = () => {
                           <p className="text-sm text-gray-700 truncate" title={req.reason}>
                             {req.reason || "-"}
                           </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          {req.evidence_photo_url ? (
+                            <img
+                              src={getMediaUrl(req.evidence_photo_url)}
+                              alt="Foto bukti"
+                              className="w-16 h-16 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => {
+                                setImageModalUrl(getMediaUrl(req.evidence_photo_url));
+                                setShowImageModal(true);
+                              }}
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-400">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border ${StatusBadge.color}`}>
@@ -469,6 +505,24 @@ const ManagerConditionApprovals = () => {
                       </div>
                     )}
 
+                    {/* Evidence Photo */}
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-gray-600">Foto Bukti:</p>
+                      {req.evidence_photo_url ? (
+                        <img
+                          src={getMediaUrl(req.evidence_photo_url)}
+                          alt="Foto bukti"
+                          className="w-full max-w-xs h-40 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => {
+                            setImageModalUrl(getMediaUrl(req.evidence_photo_url));
+                            setShowImageModal(true);
+                          }}
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-400">-</p>
+                      )}
+                    </div>
+
                     {/* Actions */}
                     <div className="flex space-x-2">
                       <button
@@ -565,6 +619,29 @@ const ManagerConditionApprovals = () => {
           setSelectedRequest(null);
         }}
       />
+
+      {/* IMAGE LIGHTBOX MODAL */}
+      {showImageModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[60] animate-fadeIn cursor-pointer"
+          onClick={() => setShowImageModal(false)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] animate-slideUp">
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute -top-3 -right-3 bg-white text-gray-700 rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors z-10"
+            >
+              ✕
+            </button>
+            <img
+              src={imageModalUrl}
+              alt="Foto bukti (fullscreen)"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes fadeIn {

@@ -65,17 +65,16 @@ const ViewDeviceChild = () => {
   };
 
   const conditionBadge = (condition) => {
-    switch (condition) {
-      case "baik":
+    const c = condition?.toUpperCase();
+    switch (c) {
+      case "BAIK":
         return { label: "Baik", color: "bg-green-100 text-green-800" };
-      case "rusak_ringan":
-        return { label: "Rusak Ringan", color: "bg-yellow-100 text-yellow-800" };
-      case "rusak_berat":
-        return { label: "Rusak Berat", color: "bg-red-100 text-red-800" };
-      case "hilang":
-        return { label: "Hilang", color: "bg-gray-200 text-gray-700" };
+      case "RUSAK":
+        return { label: "Rusak", color: "bg-red-100 text-red-800" };
+      case "MAINTENANCE":
+        return { label: "Maintenance", color: "bg-sky-100 text-sky-800" };
       default:
-        return { label: "Tidak Diketahui", color: "bg-gray-100 text-gray-600" };
+        return { label: condition || "Tidak Diketahui", color: "bg-gray-100 text-gray-600" };
     }
   };
 

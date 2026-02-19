@@ -135,9 +135,8 @@ const Statistics = () => {
 
   const deviceConditionData = [
     { name: 'Baik', value: deviceStats.good_condition || 0, color: '#10B981' },
-    { name: 'Rusak Ringan', value: deviceStats.minor_damage || 0, color: '#F59E0B' },
-    { name: 'Rusak Berat', value: deviceStats.major_damage || 0, color: '#EF4444' },
-    { name: 'Hilang', value: deviceStats.lost || 0, color: '#6B7280' }
+    { name: 'Rusak', value: (deviceStats.minor_damage || 0) + (deviceStats.major_damage || 0), color: '#EF4444' },
+    { name: 'Maintenance', value: deviceStats.maintenance || 0, color: '#38BDF8' }
   ];
 
   if (loading) {

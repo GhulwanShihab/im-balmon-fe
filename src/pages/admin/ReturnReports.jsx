@@ -8,9 +8,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  User
+  User,
+  ImageIcon
 } from 'lucide-react';
 import apiClient from '../../services/api';
+import { getMediaUrl } from '../../config/api';
 
 const ReturnReports = () => {
   const [loans, setLoans] = useState([]);
@@ -21,6 +23,8 @@ const ReturnReports = () => {
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [exportingId, setExportingId] = useState(null);
+  const [conditionChanges, setConditionChanges] = useState([]);
+  const [lightboxImage, setLightboxImage] = useState(null);
   
   const [filters, setFilters] = useState({
     status: '',
@@ -47,6 +51,27 @@ const ReturnReports = () => {
   useEffect(() => {
     fetchLoanStats();
   }, []);
+
+  // Fetch condition change requests when a loan is selected for detail view
+  useEffect(() => {
+    if (selectedLoan && showDetailModal) {
+      fetchConditionChanges(selectedLoan.id);
+    } else {
+      setConditionChanges([]);
+    }
+  }, [selectedLoan, showDetailModal]);
+
+  const fetchConditionChanges = async (loanId) => {
+    try {
+      const response = await apiClient.get('/loans/condition-change-requests', {
+        params: { loan_id: loanId }
+      });
+      setConditionChanges(response.data || []);
+    } catch (error) {
+      console.error('Error fetching condition changes:', error);
+      setConditionChanges([]);
+    }
+  };
 
   const fetchLoans = async () => {
     try {
@@ -284,6 +309,55 @@ const ReturnReports = () => {
                 <div className="bg-green-50 p-4 rounded-lg">
                   <label className="block text-sm font-medium text-gray-700">Catatan Pengembalian</label>
                   <p className="text-sm text-gray-900 mt-1">{loan.return_notes}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Evidence Photos */}
+            {conditionChanges.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">
+                  <ImageIcon className="w-5 h-5 inline mr-2" />
+                  Bukti Pergantian Kondisi
+                </h3>
+                <div className="space-y-3">
+                  {conditionChanges.map((cc) => (
+                    <div key={cc.id} className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {cc.device_name || `Device ID: ${cc.device_id}`}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {cc.old_condition} → {cc.new_condition}
+                          </p>
+                          {cc.reason && (
+                            <p className="text-xs text-gray-500 mt-1">Alasan: {cc.reason}</p>
+                          )}
+                        </div>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          cc.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                          cc.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {cc.status}
+                        </span>
+                      </div>
+                      {cc.evidence_photo_url ? (
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-500 mb-1">Foto Bukti:</p>
+                          <img
+                            src={getMediaUrl(cc.evidence_photo_url)}
+                            alt="Bukti pergantian kondisi"
+                            className="w-full max-w-xs h-40 object-cover rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setLightboxImage(getMediaUrl(cc.evidence_photo_url))}
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 mt-2 italic">Tidak ada foto bukti</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -589,6 +663,21 @@ const ReturnReports = () => {
           setSelectedLoan(null);
         }}
       />
+
+      {/* Lightbox for evidence photos */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[60] p-4 cursor-pointer"
+          onClick={() => setLightboxImage(null)}
+        >
+          <img
+            src={lightboxImage}
+            alt="Bukti pergantian kondisi (fullsize)"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };

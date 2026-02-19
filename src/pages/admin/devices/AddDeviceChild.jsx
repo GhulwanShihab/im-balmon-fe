@@ -9,6 +9,7 @@ const AddDeviceChild = () => {
   const [photos, setPhotos] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [devices, setDevices] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [childDevice, setChildDevice] = useState({
@@ -21,7 +22,7 @@ const AddDeviceChild = () => {
     device_year: new Date().getFullYear(),
     device_type: "",
     device_station: "",
-    device_condition: "baik",
+    device_condition: "BAIK",
     device_status: "TERSEDIA",
     device_room: "",
     description: "",
@@ -43,6 +44,25 @@ const AddDeviceChild = () => {
     };
     fetchDevices();
   }, []);
+
+  // Fetch locations for dropdowns
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await apiClient.get('/locations/');
+        const data = Array.isArray(res.data) ? res.data : [];
+        setLocations(data);
+      } catch (err) {
+        console.error('❌ Gagal mengambil daftar lokasi:', err);
+        setLocations([]);
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  // Stations and rooms from locations API (filtered by type)
+  const stations = locations.filter(loc => loc.type === 'STASIUN');
+  const rooms = locations.filter(loc => loc.type === 'RUANGAN');
 
   // ✏️ Handle input
   const handleInputChange = (field, value) => {
@@ -181,8 +201,32 @@ const AddDeviceChild = () => {
             Lokasi & Penempatan
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField label="Stasiun Perangkat" field="device_station" value={childDevice.device_station} placeholder="Contoh: Stasiun 1, Lab A" onChange={handleInputChange} />
-            <InputField label="Ruangan" field="device_room" value={childDevice.device_room} placeholder="Contoh: Lab Elektronik 1" onChange={handleInputChange} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Stasiun Perangkat</label>
+              <select
+                value={childDevice.device_station}
+                onChange={(e) => handleInputChange('device_station', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                <option value="">-- Pilih Stasiun --</option>
+                {stations.map((loc) => (
+                  <option key={loc.id} value={loc.name}>{loc.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Ruangan</label>
+              <select
+                value={childDevice.device_room}
+                onChange={(e) => handleInputChange('device_room', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                <option value="">-- Pilih Ruangan --</option>
+                {rooms.map((loc) => (
+                  <option key={loc.id} value={loc.name}>{loc.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -206,10 +250,9 @@ const AddDeviceChild = () => {
                 }
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               >
-                <option value="baik">Baik</option>
-                <option value="rusak_ringan">Rusak Ringan</option>
-                <option value="rusak_berat">Rusak Berat</option>
-                <option value="hilang">Hilang</option>
+                <option value="BAIK">Baik</option>
+                <option value="RUSAK">Rusak</option>
+                <option value="MAINTENANCE">Maintenance</option>
               </select>
             </div>
             <div>
