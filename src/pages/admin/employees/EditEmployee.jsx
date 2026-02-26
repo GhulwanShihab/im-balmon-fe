@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 const EditEmployee = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ nama: '', nip: '', jabatan: '' });
+  const [form, setForm] = useState({ nama: '', nip: '', jabatan: '', is_pihak_1: false });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -69,12 +69,24 @@ const EditEmployee = () => {
         nama: form.nama.trim(),
         nip: form.nip.trim(),
         jabatan: form.jabatan.trim(),
+        is_pihak_1: form.is_pihak_1,
       });
       toast.success('Pegawai berhasil diperbarui');
       navigate('/admin/employees');
     } catch (error) {
       console.error('Error:', error);
-      const errorMessage = error.response?.data?.message || 'Gagal memperbarui pegawai';
+      // Try to get specific detail string from backend first (e.g. FastAPI validation errors or custom HTTPException)
+      const detail = error.response?.data?.detail;
+      let errorMessage = 'Gagal memperbarui pegawai';
+      
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) {
+        errorMessage = detail[0].msg; // Handle FastAPI Pydantic validation errors
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -223,6 +235,34 @@ const EditEmployee = () => {
                   <span className="text-sm">{errors.jabatan}</span>
                 </div>
               )}
+            </div>
+
+            {/* Toggle is_pihak_1 */}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Hak Akses Pihak 1
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={!!form.is_pihak_1}
+                    onChange={(e) => handleChange('is_pihak_1', e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-11 h-6 rounded-full transition-colors ${
+                    form.is_pihak_1 ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}>
+                    <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                      form.is_pihak_1 ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Dapat menjadi Kuasa Izin Peminjam Barang (Pihak 1)</p>
+                  <p className="text-xs text-gray-500">Jika diaktifkan, pegawai ini akan tampil di dropdown Pihak 1 pada form peminjaman</p>
+                </div>
+              </label>
             </div>
 
             {/* Info Box */}

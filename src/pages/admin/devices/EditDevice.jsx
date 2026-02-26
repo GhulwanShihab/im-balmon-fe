@@ -110,7 +110,19 @@ const EditDevice = () => {
         return;
       }
       
-      toast.error('Gagal memperbarui perangkat. Silakan coba lagi.');
+      // Try to get specific detail string from backend first (e.g. FastAPI validation errors or custom HTTPException)
+      const detail = error.response?.data?.detail;
+      let errorMessage = 'Gagal memperbarui perangkat. Silakan coba lagi.';
+      
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) {
+        errorMessage = detail[0].msg; // Handle FastAPI Pydantic validation errors
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

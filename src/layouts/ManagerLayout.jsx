@@ -14,6 +14,8 @@ import {
   CheckCircle,
   UserCheck
 } from 'lucide-react';
+import logoBalmon from '../assets/logo-balmon.png';
+import logoKomdigi from '../assets/logo-komdigi.png';
 
 const ManagerLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -62,23 +64,29 @@ const ManagerLayout = () => {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0 flex flex-col`}>
         
-        {/* Sidebar header - warna hijau untuk manager */}
-        <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100 bg-gradient-to-r from-green-600 to-green-700 flex-shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <Smartphone className="w-6 h-6 text-white" />
+        {/* Sidebar header */}
+        <div className="flex flex-col border-b border-green-500 bg-gradient-to-r from-green-700 to-green-800 flex-shrink-0">
+          {/* Logo row */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 bg-white rounded-xl px-2 py-1.5 shadow-md">
+                <img src={logoBalmon} alt="Balmon" className="h-7 w-auto object-contain" />
+                <div className="w-px h-5 bg-gray-200"></div>
+                <img src={logoKomdigi} alt="Komdigi" className="h-7 w-auto object-contain" />
+              </div>
             </div>
-            <div>
-              <span className="text-xl font-bold text-white">IM-Balmon</span>
-              <p className="text-xs text-green-100 font-medium">Manager Panel</p>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-lg hover:bg-white hover:bg-opacity-20 text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-lg hover:bg-white hover:bg-opacity-20 text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Title row */}
+          <div className="px-5 pb-4">
+            <span className="text-lg font-bold text-white">IM-Balmon</span>
+            <p className="text-xs text-green-200 font-medium">Manager Panel</p>
+          </div>
         </div>
 
         {/* Navigation - flex-1 to take available space */}

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Lock, Mail, Smartphone, ArrowRight, Shield } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ArrowRight, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient, { TokenManager } from '../services/api';
+import logoBalmon from '../assets/logo-balmon.png';
+import logoKomdigi from '../assets/logo-komdigi.png';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -210,15 +212,27 @@ const LoginPage = () => {
 
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          {/* Logo */}
+          {/* Logo Instansi */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg mb-6 transform hover:scale-110 transition-transform duration-300">
-              <Smartphone className="w-10 h-10 text-white" />
+            {/* Logo Balmon & Komdigi */}
+            <div className="flex items-center justify-center space-x-5 mb-5">
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center p-2 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                  <img src={logoBalmon} alt="Logo Balmon" className="w-full h-full object-contain" />
+                </div>
+              </div>
+              <div className="h-14 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center p-2 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                  <img src={logoKomdigi} alt="Logo Komdigi" className="w-full h-full object-contain" />
+                </div>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-              Selamat Datang
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-1">
+              Sistem IM-Balmon
             </h1>
-            <p className="text-gray-600">Masuk ke Sistem IM-Balmon</p>
+            <p className="text-sm text-gray-500">Balai Monitor Spektrum Frekuensi Radio</p>
+            <p className="text-xs text-gray-400 mt-1">Masukkan kredensial Anda untuk melanjutkan</p>
           </div>
 
           {/* Form Login */}

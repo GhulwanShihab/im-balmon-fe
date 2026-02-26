@@ -13,6 +13,8 @@ import {
   User,
   MapPin
 } from 'lucide-react';
+import logoBalmon from '../assets/logo-balmon.png';
+import logoKomdigi from '../assets/logo-komdigi.png';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -60,25 +62,31 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl border-r border-gray-100 transform ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0`}>
+      } transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0 flex flex-col h-full`}>
         
         {/* Sidebar header */}
-        <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-blue-700">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <Smartphone className="w-6 h-6 text-white" />
+        <div className="flex flex-col border-b border-blue-500 bg-gradient-to-r from-blue-700 to-blue-800 flex-shrink-0">
+          {/* Logo row */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 bg-white rounded-xl px-2 py-1.5 shadow-md">
+                <img src={logoBalmon} alt="Balmon" className="h-7 w-auto object-contain" />
+                <div className="w-px h-5 bg-gray-200"></div>
+                <img src={logoKomdigi} alt="Komdigi" className="h-7 w-auto object-contain" />
+              </div>
             </div>
-            <div>
-              <span className="text-xl font-bold text-white">IM-Balmon</span>
-              <p className="text-xs text-blue-100 font-medium">Admin Panel</p>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-lg hover:bg-white hover:bg-opacity-20 text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-lg hover:bg-white hover:bg-opacity-20 text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Title row */}
+          <div className="px-5 pb-4">
+            <span className="text-lg font-bold text-white">IM-Balmon</span>
+            <p className="text-xs text-blue-200 font-medium">Admin Panel</p>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -118,7 +126,7 @@ const AdminLayout = () => {
         </nav>
 
         {/* User section */}
-        <div className="border-t border-gray-100 p-6 bg-gray-50">
+        <div className="border-t border-gray-100 p-6 bg-gray-50 flex-shrink-0">
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
               <User className="w-6 h-6 text-white" />

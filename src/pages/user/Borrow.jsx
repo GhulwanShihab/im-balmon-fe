@@ -43,6 +43,7 @@ const BorrowPage = () => {
   const [stationFilter, setStationFilter] = useState('');
   const [roomFilter, setRoomFilter] = useState('');
   const [employees, setEmployees] = useState([]);
+  const [pihak1Employees, setPihak1Employees] = useState([]);
   const [employeeLoading, setEmployeeLoading] = useState(false);
   const scannerRef = useRef(null);
   const location = useLocation();
@@ -70,8 +71,13 @@ const BorrowPage = () => {
     const fetchEmployees = async () => {
       try {
         setEmployeeLoading(true);
-        const response = await apiClient.get('/employees/');
-        setEmployees(response.data.employees || response.data || []);
+        // Fetch semua pegawai untuk dropdown Pihak 2
+        const [allRes, pihak1Res] = await Promise.all([
+          apiClient.get('/employees/'),
+          apiClient.get('/employees/', { params: { pihak_1_only: true } })
+        ]);
+        setEmployees(allRes.data.employees || allRes.data || []);
+        setPihak1Employees(pihak1Res.data.employees || pihak1Res.data || []);
       } catch (error) {
         console.error('Error fetching employees:', error);
       } finally {
@@ -739,7 +745,7 @@ const BorrowPage = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <User className="w-4 h-4 inline mr-1" />
-              Pihak 1 (Penanggung Jawab) *
+              Kuasa Izin Peminjam Barang *
             </label>
             <select
               value={formData.pihak_1_id || ''}
@@ -749,17 +755,22 @@ const BorrowPage = () => {
                         transition-all text-sm sm:text-base"
               required
             >
-              <option value="">Pilih Pegawai...</option>
+              <option value="">Pilih Kuasa Izin Peminjam Barang...</option>
               {employeeLoading ? (
                 <option>Memuat data...</option>
               ) : (
-                employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.nama} ({emp.jabatan})
-                  </option>
-                ))
+                pihak1Employees
+                  .filter((emp) => String(emp.id) !== String(formData.pihak_2_id))
+                  .map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.nama} ({emp.jabatan})
+                    </option>
+                  ))
               )}
             </select>
+            {pihak1Employees.length === 0 && !employeeLoading && (
+              <p className="text-xs text-amber-600 mt-1">⚠️ Belum ada pegawai yang ditandai sebagai Kuasa Izin Peminjam Barang. Hubungi admin.</p>
+            )}
           </div>
             
           <div>
@@ -779,11 +790,13 @@ const BorrowPage = () => {
               {employeeLoading ? (
                 <option>Memuat data...</option>
               ) : (
-                employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.nama} ({emp.jabatan})
-                  </option>
-                ))
+                employees
+                  .filter((emp) => String(emp.id) !== String(formData.pihak_1_id))
+                  .map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.nama} ({emp.jabatan})
+                    </option>
+                  ))
               )}
             </select>
           </div>

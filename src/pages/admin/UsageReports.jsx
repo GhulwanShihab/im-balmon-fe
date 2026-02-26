@@ -33,6 +33,8 @@ const UsageReports = () => {
     borrower_name: '',
     assignment_letter_number: '',
     status: '',
+    loan_start_date_from: '',
+    loan_start_date_to: '',
     sort_by: 'loan_start_date',
     sort_order: 'desc'
   });
@@ -57,6 +59,8 @@ const UsageReports = () => {
       if (filters.borrower_name) params.borrower_name = filters.borrower_name;
       if (filters.assignment_letter_number) params.assignment_letter_number = filters.assignment_letter_number;
       if (filters.status) params.status = filters.status;
+      if (filters.loan_start_date_from) params.loan_start_date_from = filters.loan_start_date_from;
+      if (filters.loan_start_date_to) params.loan_start_date_to = filters.loan_start_date_to;
       if (filters.sort_by) params.sort_by = filters.sort_by;
       if (filters.sort_order) params.sort_order = filters.sort_order;
 
@@ -240,32 +244,83 @@ const UsageReports = () => {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input
-            type="text"
-            placeholder="Cari nama peminjam..."
-            value={filters.borrower_name}
-            onChange={(e) => handleFilterChange('borrower_name', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <input
-            type="text"
-            placeholder="No. Surat Tugas..."
-            value={filters.assignment_letter_number}
-            onChange={(e) => handleFilterChange('assignment_letter_number', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <select
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Semua Status</option>
-            <option value="ACTIVE">Aktif</option>
-            <option value="RETURNED">Dikembalikan</option>
-            <option value="OVERDUE">Terlambat</option>
-            <option value="CANCELLED">Dibatalkan</option>
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Peminjam</label>
+            <input
+              type="text"
+              placeholder="Cari nama peminjam..."
+              value={filters.borrower_name}
+              onChange={(e) => handleFilterChange('borrower_name', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">No. Surat Tugas</label>
+            <input
+              type="text"
+              placeholder="No. Surat Tugas..."
+              value={filters.assignment_letter_number}
+              onChange={(e) => handleFilterChange('assignment_letter_number', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Semua Status</option>
+              <option value="ACTIVE">Aktif</option>
+              <option value="RETURNED">Dikembalikan</option>
+              <option value="OVERDUE">Terlambat</option>
+              <option value="CANCELLED">Dibatalkan</option>
+            </select>
+          </div>
+          
+          <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">
+               Urutkan berdasarkan
+             </label>
+             <select
+               value={filters.sort_by}
+               onChange={(e) => handleFilterChange('sort_by', e.target.value)}
+               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+             >
+               <option value="loan_start_date">Tanggal Mulai</option>
+               <option value="loan_end_date">Tanggal Berakhir</option>
+               <option value="borrower_name">Nama Peminjam</option>
+               <option value="created_at">Tanggal Dibuat</option>
+             </select>
+           </div>
+          
+          <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">
+               Mulai (Dari)
+             </label>
+             <input
+               type="date"
+               value={filters.loan_start_date_from}
+               onChange={(e) => handleFilterChange('loan_start_date_from', e.target.value)}
+               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+             />
+           </div>
+
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">
+               Mulai (Sampai)
+             </label>
+             <input
+               type="date"
+               value={filters.loan_start_date_to}
+               onChange={(e) => handleFilterChange('loan_start_date_to', e.target.value)}
+               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+             />
+           </div>
         </div>
       </div>
 
