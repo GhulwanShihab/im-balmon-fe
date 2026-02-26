@@ -96,7 +96,7 @@ const ManagerUserApprovals = () => {
             </button>
             <button
               onClick={() => {
-                handleReject(user.id, user.nama);
+                handleReject(user.uuid, user.nama);
                 onClose();
               }}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors flex items-center gap-2"
@@ -106,7 +106,7 @@ const ManagerUserApprovals = () => {
             </button>
             <button
               onClick={() => {
-                handleApprove(user.id, user.nama);
+                handleApprove(user.uuid, user.nama);
                 onClose();
               }}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors flex items-center gap-2"
@@ -126,7 +126,7 @@ const ManagerUserApprovals = () => {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Persetujuan Pengguna</h1>
         <p className="text-gray-600 mt-1">
-          Setujui atau tolak pendaftaran pengguna baru
+          Pengguna yang sudah memverifikasi email menunggu persetujuan
         </p>
       </div>
 
@@ -206,14 +206,14 @@ const ManagerUserApprovals = () => {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleApprove(user.id, user.nama)}
+                          onClick={() => handleApprove(user.uuid, user.nama)}
                           className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2"
                         >
                           <UserCheck className="w-4 h-4" />
                           Setujui
                         </button>
                         <button
-                          onClick={() => handleReject(user.id, user.nama)}
+                          onClick={() => handleReject(user.uuid, user.nama)}
                           className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2"
                         >
                           <UserX className="w-4 h-4" />

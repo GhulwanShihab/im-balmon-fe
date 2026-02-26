@@ -66,6 +66,10 @@ import Login from './pages/login';
 //import PenggunaanPerangkat from './pages/penggunaanperangkat';
 //import PerangkatScan from './pages/perangkatscan';
 import Registrasi from './pages/registrasi';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import Profile from './pages/Profile';
 //import RiwayatPerangkat from './pages/riwayatperangkat';
 //import AdminInfo from './pages/AdminInfo';
 
@@ -187,7 +191,7 @@ const AdminRoute = ({ children }) => {
           
           // Check if user has admin or pimpinan role
           const hasAdminAccess = userRoles.some(role => 
-            role.name === 'admin' || role.name === 'pimpinan'
+            role.name === 'admin' || role.name === 'superadmin' || role.name === 'pimpinan'
           );
           
           setIsAdmin(hasAdminAccess);
@@ -274,7 +278,7 @@ const ManagerRoute = ({ children }) => {
           
           // Check if user has manager role
           const hasManagerAccess = userRoles.some(role => 
-            role.name === 'manager' || role.name === 'pimpinan' || role.name === 'admin'
+            role.name === 'manager' || role.name === 'pimpinan' || role.name === 'admin' || role.name === 'superadmin'
           );
           
           setIsManager(hasManagerAccess);
@@ -337,6 +341,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Registrasi />} />
           <Route path="/registrasi" element={<Registrasi />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/*<Route path="/admin-info" element={<AdminInfo />} />*/}
           
           {/* Admin Routes */}
@@ -370,6 +377,7 @@ function App() {
             <Route path="locations" element={<Locations />} />
             <Route path="locations/add" element={<AddLocation />} />
             <Route path="locations/:id/edit" element={<EditLocation />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
 
           {/* Manager Routes */}
@@ -390,6 +398,7 @@ function App() {
             <Route path="user-approvals" element={<ManagerUserApprovals />} />
             <Route path="employees" element={<ManagerEmployees />} />
             <Route path="employees/:id/view" element={<ManagerViewEmployee />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
 
           {/* User Routes */}
@@ -404,6 +413,7 @@ function App() {
             <Route path="borrow-group" element={<BorrowGroupPage />} />
             <Route path="return" element={<ReturnPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
 
           {/* Existing Protected Routes 

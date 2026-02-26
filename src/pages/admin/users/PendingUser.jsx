@@ -119,8 +119,8 @@ const PendingUsers = () => {
               <div>
                 <h3 className="font-semibold text-orange-900 mb-1">Tindakan Diperlukan</h3>
                 <p className="text-sm text-orange-800">
-                  Tinjau dan setujui atau tolak registrasi pengguna baru. Pengguna yang ditolak akan
-                  dihapus secara permanen.
+                  Pengguna berikut sudah memverifikasi email dan menunggu persetujuan admin.
+                  Pengguna yang ditolak akan dihapus secara permanen.
                 </p>
               </div>
             </div>

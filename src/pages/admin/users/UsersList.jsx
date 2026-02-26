@@ -625,7 +625,9 @@ const UsersTable = ({ users, roles, onRoleChange, onDelete, onUnlock }) => {
                         <span
                           key={index}
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            roleName === 'admin'
+                            roleName === 'superadmin'
+                              ? 'bg-purple-100 text-purple-700'
+                              : roleName === 'admin'
                               ? 'bg-red-100 text-red-700'
                               : roleName === 'manager'
                               ? 'bg-blue-100 text-blue-700'
@@ -643,21 +645,21 @@ const UsersTable = ({ users, roles, onRoleChange, onDelete, onUnlock }) => {
                 <td className="py-4 px-4">
                   <div className="flex items-center justify-center gap-1 md:gap-2">
                     <a
-                      href={`/admin/users/${user.id}`}
+                      href={`/admin/users/${user.uuid}`}
                       className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
                       title="Lihat Detail"
                     >
                       <Eye size={18} className="text-slate-400 group-hover:text-blue-600" />
                     </a>
                     <a
-                      href={`/admin/users/edit/${user.id}`}
+                      href={`/admin/users/edit/${user.uuid}`}
                       className="p-2 hover:bg-yellow-50 rounded-lg transition-colors group"
                       title="Edit"
                     >
                       <Edit2 size={18} className="text-slate-400 group-hover:text-yellow-600" />
                     </a>
                     <button
-                      onClick={() => onDelete(user.id)}
+                      onClick={() => onDelete(user.uuid)}
                       className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
                       title="Hapus"
                     >
@@ -730,14 +732,14 @@ const PendingUsersTable = ({ users, onApprove, onReject }) => {
               <td className="py-4 px-4">
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   <button
-                    onClick={() => onApprove(user.id)}
+                    onClick={() => onApprove(user.uuid)}
                     className="px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
                   >
                     <UserCheck size={16} />
                     <span className="hidden sm:inline">Setujui</span>
                   </button>
                   <button
-                    onClick={() => onReject(user.id)}
+                    onClick={() => onReject(user.uuid)}
                     className="px-3 md:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
                   >
                     <UserX size={16} />

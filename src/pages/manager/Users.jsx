@@ -230,7 +230,9 @@ const ManagerUsers = () => {
                     <span
                       key={index}
                       className={`inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold rounded-full ${
-                        roleName === 'admin'
+                        roleName === 'superadmin'
+                          ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                          : roleName === 'admin'
                           ? 'bg-red-100 text-red-700 border border-red-200'
                           : roleName === 'manager'
                           ? 'bg-blue-100 text-blue-700 border border-blue-200'
@@ -404,7 +406,9 @@ const ManagerUsers = () => {
                               <span
                                 key={index}
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  roleName === 'admin'
+                                  roleName === 'superadmin'
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : roleName === 'admin'
                                     ? 'bg-red-100 text-red-700'
                                     : roleName === 'manager'
                                     ? 'bg-blue-100 text-blue-700'

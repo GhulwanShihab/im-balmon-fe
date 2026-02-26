@@ -30,6 +30,7 @@ const ManagerLayout = () => {
     //{ icon: BarChart3, label: 'Statistik', path: '/manager/statistics' },
     { icon: UserCheck, label: 'Persetujuan User', path: '/manager/user-approvals' },
     { icon: Users, label: 'Daftar Pengguna', path: '/manager/users' },
+    { icon: User, label: 'Profil', path: '/manager/profile' },
   ];
 
   const handleLogout = () => {

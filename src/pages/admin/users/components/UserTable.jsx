@@ -51,7 +51,9 @@ const UserTable = ({ users, onDelete, loading }) => {
                 <div className="flex items-center gap-2">
                   {/* Display current role name */}
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    u.role_names?.[0] === 'admin' 
+                    u.role_names?.[0] === 'superadmin'
+                      ? 'bg-purple-100 text-purple-800'
+                      : u.role_names?.[0] === 'admin' 
                       ? 'bg-red-100 text-red-800' 
                       : u.role_names?.[0] === 'manager' 
                         ? 'bg-blue-100 text-blue-800' 
@@ -76,13 +78,13 @@ const UserTable = ({ users, onDelete, loading }) => {
               </td>
               <td className="p-3 text-center space-x-2">
                 <Link
-                  to={`/admin/users/${u.id}`}
+                  to={`/admin/users/${u.uuid}`}
                   className="text-blue-600 hover:text-blue-800"
                 >
                   <Eye size={18} />
                 </Link>
                 <Link
-                  to={`/admin/users/edit/${u.id}`}
+                  to={`/admin/users/edit/${u.uuid}`}
                   className="text-yellow-600 hover:text-yellow-800"
                 >
                   <Edit size={18} />

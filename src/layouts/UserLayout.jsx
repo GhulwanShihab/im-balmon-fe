@@ -25,6 +25,7 @@ const UserLayout = () => {
     //{ icon: QrCode, label: 'Pinjam Group', path: '/user/borrow-group' },
     { icon: RotateCcw, label: 'Pengembalian', path: '/user/return' },
     { icon: FileText, label: 'Laporan', path: '/user/reports' },
+    { icon: User, label: 'Profil', path: '/user/profile' },
   ];
 
   const handleLogout = () => {

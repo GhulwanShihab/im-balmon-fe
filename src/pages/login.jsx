@@ -118,7 +118,7 @@ const LoginPage = () => {
       const userName = userData.full_name || userData.username || 'User';
       let redirectPath = '/user'; // Default
       
-      if (roleNames.includes('admin') || roleNames.includes('pimpinan')) {
+      if (roleNames.includes('superadmin') || roleNames.includes('admin') || roleNames.includes('pimpinan')) {
         redirectPath = '/admin';
         console.log('✅ Redirect to: /admin (Admin/Pimpinan)');
       } else if (roleNames.includes('manager')) {
@@ -131,7 +131,7 @@ const LoginPage = () => {
 
       // Show success toast
       toast.success(`Selamat datang, ${userName}!`, {
-        icon: roleNames.includes('admin') ? '👨‍💼' : roleNames.includes('manager') ? '👔' : '👋',
+        icon: roleNames.includes('superadmin') ? '🛡️' : roleNames.includes('admin') ? '👨‍💼' : roleNames.includes('manager') ? '👔' : '👋',
         duration: 2000,
       });
 
@@ -175,7 +175,7 @@ const LoginPage = () => {
             errorMessage = detail || 'Email atau password salah';
             break;
           case 403:
-            errorMessage = 'Akses ditolak';
+            errorMessage = detail || 'Akses ditolak';
             break;
           case 422:
             errorMessage = 'Data tidak valid';
@@ -278,7 +278,7 @@ const LoginPage = () => {
                 </div>
               </div>
 
-              {/* Remember Me 
+              {/* Remember Me
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -291,6 +291,17 @@ const LoginPage = () => {
                   Ingat saya
                 </label>
               </div> */}
+
+              {/* Lupa Password */}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors"
+                >
+                  Lupa Password?
+                </button>
+              </div>
 
               {/* Tombol Login */}
               <button

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Mail, User, Lock, UserPlus, ArrowRight, Shield, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, User, Lock, UserPlus, ArrowRight, Shield, CheckCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../services/api';
@@ -17,6 +17,9 @@ const Registrasi = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [resending, setResending] = useState(false);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -52,7 +55,7 @@ const Registrasi = () => {
     setLoading(true);
 
     try {
-      const response = await apiClient.post('/auth/register', {
+      await apiClient.post('/auth/register', {
         email: formData.email,
         password: formData.password,
         nama: formData.nama,
@@ -60,13 +63,26 @@ const Registrasi = () => {
         jabatan: formData.jabatan || null,
       });
 
-      toast.success(response.data.detail || 'Registrasi berhasil! Tunggu persetujuan admin.');
-      navigate('/login');
+      setRegisteredEmail(formData.email);
+      setRegistrationSuccess(true);
+      toast.success('Registrasi berhasil! Cek email Anda.');
     } catch (error) {
       const errorMessage = error.response?.data?.detail || error.message || 'Registrasi gagal';
       toast.error(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    try {
+      await apiClient.post('/auth/resend-verification', { email: registeredEmail });
+      toast.success('Link verifikasi telah dikirim ulang!');
+    } catch (error) {
+      toast.error('Gagal mengirim ulang email verifikasi.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -78,6 +94,76 @@ const Registrasi = () => {
   };
 
   const passwordStrength = getPasswordStrength(formData.password);
+
+  // Show success screen after registration
+  if (registrationSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-blue-50 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-10 right-20 w-40 h-40 bg-emerald-300 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob"></div>
+          <div className="absolute top-60 left-20 w-40 h-40 bg-cyan-300 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-20 right-40 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-4000"></div>
+        </div>
+
+        <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 text-center space-y-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full">
+                <Mail className="w-10 h-10 text-emerald-600" />
+              </div>
+              
+              <h2 className="text-2xl font-bold text-gray-800">Cek Email Anda! 📧</h2>
+              
+              <p className="text-gray-600">
+                Kami telah mengirim link verifikasi ke:
+              </p>
+              <p className="font-semibold text-emerald-700 bg-emerald-50 py-2 px-4 rounded-xl">
+                {registeredEmail}
+              </p>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-left">
+                <p className="text-sm font-medium text-blue-800 mb-2">Langkah selanjutnya:</p>
+                <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                  <li>Buka email dan klik link verifikasi</li>
+                  <li>Tunggu persetujuan admin</li>
+                  <li>Login setelah akun diapprove</li>
+                </ol>
+              </div>
+
+              <div className="flex space-x-4">
+                <button
+                  onClick={handleResendVerification}
+                  disabled={resending}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-50"
+                >
+                  {resending ? (
+                    <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  <span>{resending ? 'Mengirim...' : 'Kirim Ulang'}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white font-semibold py-3 rounded-2xl shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <span>Ke Login</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <style jsx>{`
+          @keyframes blob { 0% { transform: translate(0px, 0px) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0px, 0px) scale(1); } }
+          .animate-blob { animation: blob 7s infinite; }
+          .animation-delay-2000 { animation-delay: 2s; }
+          .animation-delay-4000 { animation-delay: 4s; }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-blue-50 relative overflow-hidden">

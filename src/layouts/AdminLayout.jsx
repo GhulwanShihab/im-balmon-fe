@@ -28,6 +28,7 @@ const AdminLayout = () => {
     //{ icon: BarChart3, label: 'Statistik', path: '/admin/statistics' },
     { icon: Users, label: 'Pengguna', path: '/admin/users' },
     { icon: MapPin, label: 'Lokasi', path: '/admin/locations' },
+    { icon: User, label: 'Profil', path: '/admin/profile' },
   ];
 
   const handleLogout = () => {
