@@ -15,7 +15,8 @@ import {
   AlertCircle,
   Layers,
   Calendar,
-  User
+  User,
+  Info
 } from 'lucide-react';
 import apiClient from '../../services/api';
 import DeviceImage from '../../components/DeviceImage';
@@ -217,6 +218,19 @@ const DeviceGroupsPage = () => {
               className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Narasi Panduan */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start space-x-3">
+        <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+        <div className="text-sm text-blue-800">
+          <p className="font-medium mb-1">Apa itu Grup Perangkat?</p>
+          <p>
+            Grup perangkat memudahkan Anda <strong>meminjam beberapa perangkat sekaligus</strong> dalam satu kali proses. 
+            Buat grup dengan memilih perangkat yang sering Anda pinjam bersamaan, lalu klik tombol <strong>"Pinjam"</strong> pada grup tersebut 
+            untuk langsung mengajukan peminjaman semua perangkat dalam grup.
+          </p>
         </div>
       </div>
 

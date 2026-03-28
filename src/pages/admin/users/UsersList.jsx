@@ -327,6 +327,19 @@ const AdminUserManagement = () => {
 
   const pendingCount = stats.pending_users || 0;
 
+  const currentUserId = (() => {
+    try {
+      const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (userStr) {
+        const parsed = JSON.parse(userStr);
+        return parsed.uuid || parsed.id;
+      }
+    } catch {
+      // Ignore
+    }
+    return null;
+  })();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -462,7 +475,7 @@ const AdminUserManagement = () => {
               <LoadingState />
             ) : activeTab === "all" ? (
               <UsersTable
-                users={users}
+                users={users.filter(u => u.uuid !== currentUserId && u.id !== currentUserId)}
                 roles={roles}
                 onDelete={handleDelete}
                 onUnlock={handleUnlock}

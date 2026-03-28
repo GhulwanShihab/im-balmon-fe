@@ -23,8 +23,28 @@ const UserFormWithRoles = ({ onSubmit, initialData = {}, isEdit = false }) => {
     const fetchRoles = async () => {
       setLoadingRoles(true);
       try {
+        const currentUserRolesJson = localStorage.getItem('roles') || sessionStorage.getItem('roles');
+        let currentUserRoles = [];
+        if (currentUserRolesJson) {
+          try {
+            currentUserRoles = JSON.parse(currentUserRolesJson).map(r => r.name);
+          } catch (e) {
+            console.error("Error parsing current user roles", e);
+          }
+        }
+
         const data = await getRoles();
-        setRoles(Array.isArray(data) ? data : []);
+        let availableRoles = Array.isArray(data) ? data : [];
+        
+        // Remove superadmin role entirely
+        availableRoles = availableRoles.filter(role => role.name !== 'superadmin');
+
+        // Ordinary admin cannot create another admin
+        if (currentUserRoles.includes('admin') && !currentUserRoles.includes('superadmin')) {
+          availableRoles = availableRoles.filter(role => role.name !== 'admin');
+        }
+
+        setRoles(availableRoles);
       } catch (error) {
         console.error("Error fetching roles:", error);
         toast.error("Gagal memuat daftar role");

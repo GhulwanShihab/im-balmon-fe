@@ -19,12 +19,13 @@ const AddUser = () => {
       const newUser = await createUser(userData);
       
       // If user created successfully and has roles, assign roles
-      if (newUser && newUser.id && role_ids && role_ids.length > 0) {
+      const userIdToUse = newUser.uuid || newUser.id;
+      if (newUser && userIdToUse && role_ids && role_ids.length > 0) {
         try {
-          await updateUserRole(newUser.id, { role_ids });
+          await updateUserRole(userIdToUse, { role_ids });
         } catch (roleError) {
           console.error("Error assigning roles:", roleError);
-          toast.warning("Pengguna dibuat, tapi gagal assign role. Silakan edit role nanti.");
+          toast("Pengguna dibuat, tapi gagal assign role. Silakan edit role nanti.", { icon: "⚠️" });
         }
       }
       

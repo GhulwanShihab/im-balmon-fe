@@ -3,34 +3,30 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Edit, X, Trash, Plus } from 'lucide-react';
 import apiClient from '../../../services/api';
 import toast from 'react-hot-toast';
+import { useDeviceForm } from '../../../hooks/useDeviceForm';
 
 const EditDevice = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [loading, setLoading] = useState(false);
   const [fetchingDevice, setFetchingDevice] = useState(true);
-  const [photos, setPhotos] = useState([]); // file baru yang diupload
-  const [previews, setPreviews] = useState([]); // preview foto baru
   const [existingPhotos, setExistingPhotos] = useState([]); // foto lama dari backend
-  const [locations, setLocations] = useState([]);
-  const [device, setDevice] = useState({
-    device_name: '',
-    device_code: '',
-    nup_device: '',
-    bmn_brand: '',
-    sample_brand: '',
-    device_year: new Date().getFullYear(),
-    device_type: '',
-    device_station: '',
-    device_condition: 'baik',
-    device_status: 'TERSEDIA',
-    device_room: '',
-    device_description: ''
-  });
+
+  const {
+    device,
+    setDevice,
+    loading,
+    setLoading,
+    photos,
+    previews,
+    stations,
+    rooms,
+    handleInputChange,
+    handleFileChange,
+    handleRemovePhoto,
+  } = useDeviceForm({ device_condition: 'baik', device_description: '' });
 
   useEffect(() => {
     fetchDevice();
-    fetchLocations();
   }, [id]);
 
   const fetchDevice = async () => {
@@ -60,21 +56,6 @@ const EditDevice = () => {
       setFetchingDevice(false);
     }
   };
-
-  const fetchLocations = async () => {
-    try {
-      const res = await apiClient.get('/locations/');
-      const data = Array.isArray(res.data) ? res.data : [];
-      setLocations(data);
-    } catch (err) {
-      console.error('❌ Gagal mengambil daftar lokasi:', err);
-      setLocations([]);
-    }
-  };
-
-  // Stations and rooms from locations API (filtered by type)
-  const stations = locations.filter(loc => loc.type === 'STASIUN');
-  const rooms = locations.filter(loc => loc.type === 'RUANGAN');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -128,14 +109,7 @@ const EditDevice = () => {
     }
   };
 
-  const handleInputChange = (field, value) => {
-    // Debug: Log changes to status and condition fields
-    if (field === 'device_status' || field === 'device_condition') {
-      console.log(`Changing ${field} from "${device[field]}" to "${value}"`);
-    }
-    
-    setDevice(prev => ({ ...prev, [field]: value }));
-  };
+
 
   if (fetchingDevice) {
     return (
@@ -145,19 +119,7 @@ const EditDevice = () => {
     );
   }
 
-  // Upload foto baru
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setPhotos(files);
-    const urls = files.map(file => URL.createObjectURL(file));
-    setPreviews(urls);
-  };
 
-  // Hapus preview foto baru
-  const handleRemovePhoto = (index) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
-    setPreviews(prev => prev.filter((_, i) => i !== index));
-  };
 
   // Hapus foto lama (opsional)
   const handleDeleteExistingPhoto = async (photoId) => {

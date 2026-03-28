@@ -575,8 +575,10 @@ const ReportsPage = () => {
       {/* Header */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h1 className="text-2xl font-bold text-gray-900">Laporan Peminjaman</h1>
-        <p className="text-gray-600 mt-1">
-          Riwayat dan detail peminjaman perangkat Anda
+        <p className="text-gray-600 mt-1 leading-relaxed">
+          Halaman ini menampilkan seluruh riwayat peminjaman perangkat Anda. 
+          Gunakan <strong>filter</strong> di bawah untuk mencari berdasarkan status, kegiatan, atau periode tertentu. 
+          Anda juga dapat mengunduh <strong>Berita Acara</strong> dalam format PDF untuk setiap peminjaman dengan menekan tombol "PDF" di kolom aksi.
         </p>
       </div>
 

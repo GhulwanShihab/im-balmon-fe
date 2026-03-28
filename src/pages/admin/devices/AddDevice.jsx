@@ -2,94 +2,22 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, ImagePlus, X } from 'lucide-react';
 import apiClient from '../../../services/api';
+import { useDeviceForm } from '../../../hooks/useDeviceForm';
 
 const AddDevice = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [photos, setPhotos] = useState([]); // 🆕 file list
-  const [previews, setPreviews] = useState([]); // 🆕 preview URLs
-  const [devices, setDevices] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [device, setDevice] = useState({
-    device_name: '',
-    device_code: '',
-    nup_device: '',
-    bmn_brand: '',
-    sample_brand: '',
-    device_year: new Date().getFullYear(),
-    device_type: '',
-    device_station: '',
-    device_condition: 'BAIK',
-    device_status: 'TERSEDIA',
-    device_room: '',
-    description: '',
-  });
-
-  // 🆕 Ambil daftar perangkat untuk opsi parent
-  useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const res = await apiClient.get('/devices/');
-        console.log('📦 Response dari backend:', res.data);
-      
-        // Normalisasi respons agar selalu jadi array
-        const allDevices = Array.isArray(res.data)
-          ? res.data
-          : Array.isArray(res.data?.data)
-          ? res.data.data
-          : Array.isArray(res.data?.devices)
-          ? res.data.devices
-          : [];
-      
-        setDevices(allDevices);
-      } catch (err) {
-        console.error('❌ Gagal mengambil daftar perangkat:', err);
-        setDevices([]); // fallback agar .map() tidak error
-      }
-    };
-  
-    fetchDevices();
-  }, []);
-
-  // 🆕 Ambil daftar lokasi untuk dropdown
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const res = await apiClient.get('/locations/');
-        const data = Array.isArray(res.data) ? res.data : [];
-        setLocations(data);
-      } catch (err) {
-        console.error('❌ Gagal mengambil daftar lokasi:', err);
-        setLocations([]);
-      }
-    };
-    fetchLocations();
-  }, []);
-
-  // Stations and rooms from locations API (filtered by type)
-  const stations = locations.filter(loc => loc.type === 'STASIUN');
-  const rooms = locations.filter(loc => loc.type === 'RUANGAN');
-
-
-  const handleInputChange = (field, value) => {
-    setDevice(prev => ({ ...prev, [field]: value }));
-  };
-
-  // 🆕 handle file select
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setPhotos(files);
-
-    // buat preview url
-    const urls = files.map(file => URL.createObjectURL(file));
-    setPreviews(urls);
-  };
-
-  // 🆕 hapus preview foto
-  const handleRemovePhoto = (index) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
-    setPreviews(prev => prev.filter((_, i) => i !== index));
-  };
+  const {
+    device,
+    loading,
+    setLoading,
+    photos,
+    previews,
+    stations,
+    rooms,
+    handleInputChange,
+    handleFileChange,
+    handleRemovePhoto,
+  } = useDeviceForm();
 
   const handleSubmit = async (e) => {
     e.preventDefault();

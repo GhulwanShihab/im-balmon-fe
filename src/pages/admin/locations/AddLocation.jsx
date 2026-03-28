@@ -113,7 +113,7 @@ const AddLocation = () => {
                 onChange={(e) => handleChange('name', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 required
-                placeholder={isStation ? 'Contoh: Stasiun Meteorologi Jakarta' : 'Contoh: Lab Elektronik 1'}
+                placeholder={isStation ? 'Masukkan Nama Stasiun' : 'Masukkan Nama Ruangan'}
               />
             </div>
 

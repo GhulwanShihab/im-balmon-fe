@@ -40,8 +40,6 @@ const DevicesFilters = ({ searchTerm, setSearchTerm, filters, setFilters }) => (
           <option value="">Semua Status</option>
           <option value="TERSEDIA">Tersedia</option>
           <option value="DIPINJAM">Dipinjam</option>
-          <option value="MAINTENANCE">Maintenance</option>
-          <option value="NONAKTIF">Tidak Aktif</option>
         </select>
       </div>
     </div>

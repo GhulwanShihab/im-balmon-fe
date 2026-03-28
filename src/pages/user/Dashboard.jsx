@@ -12,7 +12,9 @@ import {
   ChevronDown,
   Activity,
   FileText,
-  Wrench
+  Wrench,
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 import apiClient from '../../services/api';
 
@@ -270,6 +272,49 @@ const UserDashboard = () => {
           value={myActiveLoans}
           color="blue"
         />
+      </div>
+
+      {/* Panduan Cepat */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <BookOpen className="w-5 h-5 text-blue-600" />
+          <h2 className="text-lg font-bold text-gray-900">Panduan Cepat</h2>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Ikuti langkah-langkah berikut untuk memulai menggunakan sistem peminjaman perangkat IM-Balmon.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Step 1 */}
+          <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+            <div>
+              <h3 className="font-semibold text-gray-900 text-sm">Cari & Lihat Perangkat</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Gunakan daftar perangkat di bawah ini untuk melihat ketersediaan perangkat. Klik "Pinjam" pada perangkat yang tersedia.
+              </p>
+            </div>
+          </div>
+          {/* Step 2 */}
+          <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-xl border border-green-100">
+            <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+            <div>
+              <h3 className="font-semibold text-gray-900 text-sm">Ajukan Peminjaman</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Pilih perangkat via scan QR atau manual, isi data surat tugas dan kegiatan, lalu konfirmasi peminjaman Anda.
+              </p>
+            </div>
+          </div>
+          {/* Step 3 */}
+          <div className="flex items-start space-x-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+            <div className="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+            <div>
+              <h3 className="font-semibold text-gray-900 text-sm">Kembalikan Tepat Waktu</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Setelah selesai, kunjungi halaman Pengembalian untuk mengajukan pengembalian perangkat sebelum jatuh tempo.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Device List Section */}

@@ -14,7 +14,8 @@ import {
   X,
   Plus,
   Trash2,
-  Search
+  Search,
+  Info
 } from 'lucide-react';
 import apiClient from '../../services/api';
 import DeviceImage from '../../components/DeviceImage';
@@ -392,6 +393,15 @@ const BorrowPage = () => {
       {/* Step 1: Device Selection */}
       {step === 1 && (
         <div className="space-y-4 sm:space-y-6">
+          {/* Narasi Panduan Step 1 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start space-x-3">
+            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-800">
+              <p className="font-medium mb-1">Langkah 1: Pilih Perangkat</p>
+              <p>Pilih perangkat yang ingin Anda pinjam. Gunakan <strong>Scan QR Code</strong> untuk memilih perangkat secara cepat dengan mengarahkan kamera ke QR code pada perangkat, atau gunakan <strong>pencarian manual</strong> di bawah untuk memilih dari daftar perangkat yang tersedia.</p>
+            </div>
+          </div>
+
           {/* QR Scanner Section */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Scan QR Code Perangkat</h2>
@@ -647,6 +657,16 @@ const BorrowPage = () => {
 
       {/* Step 2: Form Data */}
       {step === 2 && (
+        <div className="space-y-4">
+          {/* Narasi Panduan Step 2 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start space-x-3">
+            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-800">
+              <p className="font-medium mb-1">Langkah 2: Lengkapi Data Peminjaman</p>
+              <p>Isi seluruh informasi peminjaman di bawah ini. Pastikan <strong>nomor surat tugas</strong>, <strong>tanggal</strong>, dan <strong>nama kegiatan</strong> sesuai dengan dokumen resmi Anda. Field yang ditandai tanda (*) wajib diisi.</p>
+            </div>
+          </div>
+
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 sm:mb-6">Data Peminjaman</h2>
           
@@ -816,10 +836,21 @@ const BorrowPage = () => {
             </button>
           </div>
         </div>
+        </div>
       )}
 
       {/* Step 3: Confirmation */}
       {step === 3 && (
+        <div className="space-y-4">
+          {/* Narasi Panduan Step 3 */}
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start space-x-3">
+            <Info className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-green-800">
+              <p className="font-medium mb-1">Langkah 3: Konfirmasi & Kirim</p>
+              <p>Periksa kembali semua data di bawah ini sebelum mengajukan peminjaman. Setelah dikonfirmasi, <strong>peminjaman akan langsung aktif</strong> dan perangkat berubah status menjadi "Dipinjam".</p>
+            </div>
+          </div>
+
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 sm:mb-6">Konfirmasi Peminjaman</h2>
           
@@ -927,6 +958,7 @@ const BorrowPage = () => {
               )}
             </button>
           </div>
+        </div>
         </div>
       )}
     </div>

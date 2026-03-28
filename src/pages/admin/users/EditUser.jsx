@@ -58,7 +58,7 @@ const EditUser = () => {
           await updateUserRole(id, { role_ids });
         } catch (roleError) {
           console.error("Error updating roles:", roleError);
-          toast.warning("Data pengguna diperbarui, tapi gagal update role");
+          toast("Data pengguna diperbarui, tapi gagal update role", { icon: "⚠️" });
         }
       }
       
