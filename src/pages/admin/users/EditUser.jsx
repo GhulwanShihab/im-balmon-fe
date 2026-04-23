@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getUserById, getUserWithRoles, updateUser, updateUserRole } from "./services/userService";
 import UserFormWithRoles from "./components/UserFormWithRoles";
@@ -29,7 +29,6 @@ const EditUser = () => {
           role_ids: roleIds
         });
       } catch (err) {
-        console.error("Error fetching user:", err);
         setError(err.response?.data?.detail || "Gagal memuat data pengguna");
         toast.error("Gagal memuat data pengguna");
       } finally {
@@ -57,7 +56,6 @@ const EditUser = () => {
         try {
           await updateUserRole(id, { role_ids });
         } catch (roleError) {
-          console.error("Error updating roles:", roleError);
           toast("Data pengguna diperbarui, tapi gagal update role", { icon: "⚠️" });
         }
       }
@@ -69,7 +67,6 @@ const EditUser = () => {
         navigate("/admin/users");
       }, 1000);
     } catch (error) {
-      console.error("Error updating user:", error);
       
       // Handle different error scenarios
       if (error.response?.status === 400) {

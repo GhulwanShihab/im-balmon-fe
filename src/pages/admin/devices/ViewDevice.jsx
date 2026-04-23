@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Eye, QrCode } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -30,7 +30,6 @@ const ViewDevice = () => {
 
       setDevice(normalizedDevice);
     } catch (error) {
-      console.error('Error fetching device:', error);
       if (error.message === 'Session expired. Please login again.') return;
       alert('Gagal memuat data perangkat');
       navigate('/admin/devices');
@@ -47,7 +46,6 @@ const ViewDevice = () => {
         alert('Perangkat berhasil dihapus');
         navigate('/admin/devices');
       } catch (error) {
-        console.error('Error deleting device:', error);
         
         if (error.message === 'Session expired. Please login again.') {
           return;

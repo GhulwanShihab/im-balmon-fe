@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   QrCode, 
@@ -53,6 +53,18 @@ const BorrowPage = () => {
   useEffect(() => {
     fetchAvailableDevices();
     
+    // Auto-fill borrower name from logged-in user
+    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        const name = user.nama || user.full_name || user.username || '';
+        if (name) {
+          setFormData(prev => ({ ...prev, borrower_name: name }));
+        }
+      } catch (e) { /* ignore */ }
+    }
+    
     // Check if device was passed from dashboard
     if (location.state?.selectedDevice) {
       setSelectedDevices([location.state.selectedDevice]);
@@ -80,7 +92,6 @@ const BorrowPage = () => {
         setEmployees(allRes.data.employees || allRes.data || []);
         setPihak1Employees(pihak1Res.data.employees || pihak1Res.data || []);
       } catch (error) {
-        console.error('Error fetching employees:', error);
       } finally {
         setEmployeeLoading(false);
       }
@@ -95,9 +106,7 @@ const BorrowPage = () => {
         params: {  page_size: 100 }
       });
       setAvailableDevices(response.data.devices || []);
-      console.log("📦 Response dari backend:", response.data);
     } catch (error) {
-      console.error('Error fetching devices:', error);
     }
   };
 
@@ -186,27 +195,20 @@ const BorrowPage = () => {
     // Trim whitespace dari hasil scan kamera
     let deviceCode = decodedText.trim();
     
-    console.log('📷 Raw scanned text:', JSON.stringify(decodedText));
-    console.log('📷 Trimmed text:', deviceCode);
     
     try {
       const parsed = JSON.parse(decodedText);
       if (parsed.device_code) {
         deviceCode = parsed.device_code.trim();
-        console.log('📷 Extracted device_code from JSON:', deviceCode);
       }
     } catch {
       // kalau bukan JSON, biarkan tetap pakai decodedText langsung
-      console.log('📷 Not JSON, using raw text as device code');
     }
 
-    console.log('📷 Final device code to search:', deviceCode);
 
     const response = await apiClient.get(`/devices/code/${encodeURIComponent(deviceCode)}`);
     const device = response.data;
     
-    console.log('✅ Device found:', device);
-    console.log('📋 Device status:', device.device_status);
 
     // Case-insensitive comparison untuk status
     const status = (device.device_status || '').toUpperCase();
@@ -223,10 +225,6 @@ const BorrowPage = () => {
     setSelectedDevices(prev => [...prev, device]);
     toast.success(`Perangkat ${device.device_name} berhasil ditambahkan`);
   } catch (error) {
-    console.error('❌ Error saat memproses QR:', error);
-    console.error('❌ Error response:', error.response?.data);
-    console.error('❌ Error status:', error.response?.status);
-    console.error('❌ Scanned text was:', decodedText);
     
     // Tampilkan pesan error yang lebih spesifik
     if (error.response?.status === 404) {
@@ -679,10 +677,9 @@ const BorrowPage = () => {
               <input
                 type="text"
                 value={formData.borrower_name}
-                onChange={handleInputChange('borrower_name')}
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all text-sm sm:text-base"
-                placeholder="Masukkan nama peminjam"
-                required
+                readOnly
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm sm:text-base text-gray-700 cursor-not-allowed"
+                placeholder="Nama terisi otomatis"
               />
             </div>
 

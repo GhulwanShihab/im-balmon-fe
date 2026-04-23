@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Search, ChevronLeft, ChevronRight, FileDown } from "lucide-react";
 import apiClient from "../../services/api";
@@ -64,7 +64,6 @@ const ManagerDevices = () => {
       setDevices(normalizedDevices);
       setTotalPages(Math.ceil(totalCount / 10));
     } catch (error) {
-      console.error("Error fetching devices:", error);
       if (error.message !== "Session expired. Please login again.") {
         alert("Gagal memuat data perangkat. Silakan coba lagi.");
       }
@@ -79,7 +78,6 @@ const ManagerDevices = () => {
     try {
       setIsExporting(true);
 
-      console.log("📤 Manager exporting with filters:", exportFilters);
 
       // Make API request to export endpoint
       const response = await apiClient.get(`/devices/export/excel`, {
@@ -91,7 +89,6 @@ const ManagerDevices = () => {
         responseType: "blob", // Important for downloading files
       });
 
-      console.log("✅ Export response received");
 
       // Create blob from response
       const blob = new Blob([response.data], {
@@ -123,13 +120,6 @@ const ManagerDevices = () => {
 
       alert("✅ File Excel berhasil diunduh!");
     } catch (error) {
-      console.error("❌ Error exporting to Excel:", error);
-      console.error("Error details:", {
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        url: error.config?.url,
-      });
       
       let errorMessage = "Gagal mengekspor data ke Excel. ";
       
@@ -151,9 +141,7 @@ const ManagerDevices = () => {
     }
   };
 
-  // Generate year options (current year - 5 to current year + 1)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 7 }, (_, i) => currentYear - 5 + i);
+
 
   const DeviceRow = ({ device }) => {
     const [expanded, setExpanded] = useState(false);
@@ -525,7 +513,7 @@ const ManagerDevices = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                   <option value="">Semua Tahun</option>
-                  {yearOptions.map((year) => (
+                  {Array.from({ length: new Date().getFullYear() - 2019 }, (_, i) => 2020 + i).map((year) => (
                     <option key={year} value={year}>
                       {year}
                     </option>

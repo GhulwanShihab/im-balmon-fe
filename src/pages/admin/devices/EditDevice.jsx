@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Edit, X, Trash, Plus } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -38,13 +38,9 @@ const EditDevice = () => {
       setDevice(deviceData);
       setExistingPhotos(deviceData.photos || []); // ambil foto lama dari backend
       // Debug: Log fetched device data
-      console.log('Fetched device data:', deviceData);
-      console.log('Initial device_status:', deviceData.device_status);
-      console.log('Initial device_condition:', deviceData.device_condition);
       
       setDevice(deviceData);
     } catch (error) {
-      console.error('Error fetching device:', error);
       
       if (error.message === 'Session expired. Please login again.') {
         return;
@@ -63,14 +59,10 @@ const EditDevice = () => {
     
     try {
       // Debug: Log the data being sent
-      console.log('Sending device data:', device);
-      console.log('Device status:', device.device_status);
-      console.log('Device condition:', device.device_condition);
       
       const response = await apiClient.put(`/devices/${id}`, device);
       
       // Debug: Log the response
-      console.log('Update response:', response.data);
       if (photos.length > 0) {
         for (const file of photos) {
           const formData = new FormData();
@@ -84,8 +76,6 @@ const EditDevice = () => {
       toast.success('Perangkat berhasil diperbarui');
       navigate('/admin/devices');
     } catch (error) {
-      console.error('Error updating device:', error);
-      console.error('Error response:', error.response?.data);
       
       if (error.message === 'Session expired. Please login again.') {
         return;
@@ -129,7 +119,6 @@ const EditDevice = () => {
       setExistingPhotos(prev => prev.filter(p => p.id !== photoId));
       toast.success('Foto dihapus');
     } catch (err) {
-      console.error(err);
       toast.error('Gagal menghapus foto');
     }
   };

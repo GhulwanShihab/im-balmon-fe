@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Plus, Edit2, Trash2, Search, X, Radio, DoorOpen, Smartphone, ChevronDown, ChevronUp } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -24,7 +24,6 @@ const Locations = () => {
       const data = Array.isArray(res.data) ? res.data : [];
       setLocations(data);
     } catch (err) {
-      console.error('Error fetching locations:', err);
       toast.error('Gagal memuat data lokasi');
     } finally {
       setLoading(false);
@@ -37,7 +36,6 @@ const Locations = () => {
       const res = await apiClient.get(`/locations/${locationId}`);
       setDevicesByLocation(prev => ({ ...prev, [locationId]: res.data.devices || [] }));
     } catch (err) {
-      console.error('Error fetching devices for location:', err);
       setDevicesByLocation(prev => ({ ...prev, [locationId]: [] }));
     }
   };
@@ -58,7 +56,6 @@ const Locations = () => {
       setDeleteConfirm(null);
       fetchLocations();
     } catch (err) {
-      console.error('Error deleting location:', err);
       toast.error('Gagal menghapus lokasi');
     }
   };

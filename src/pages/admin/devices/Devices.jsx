@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../../services/api";
 import QRCodeGenerator from "../../../components/QRCodeGenerator";
@@ -59,7 +59,6 @@ const Devices = () => {
       setDevices(normalizedDevices);
       setTotalPages(Math.ceil(totalCount / 10));
     } catch (error) {
-      console.error("Error fetching devices:", error);
       if (error.message !== "Session expired. Please login again.") {
         alert("Gagal memuat data perangkat. Silakan coba lagi.");
       }
@@ -81,7 +80,6 @@ const Devices = () => {
       fetchDevices();
       alert("Perangkat berhasil dihapus");
     } catch (error) {
-      console.error("Error deleting device:", error);
       if (error.message !== "Session expired. Please login again.") {
         alert("Gagal menghapus perangkat. Silakan coba lagi.");
       }

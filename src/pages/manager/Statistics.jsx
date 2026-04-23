@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -73,7 +73,6 @@ const ManagerStatistics = () => {
 
       generateMonthlyTrends();
     } catch (error) {
-      console.error('Error fetching statistics:', error);
     } finally {
       setLoading(false);
     }

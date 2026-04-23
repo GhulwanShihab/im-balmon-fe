@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { 
   Users as UsersIcon, 
   Search, 
@@ -64,7 +64,6 @@ const ManagerUsers = () => {
       setUsers(response.data.users);
       setTotalPages(Math.ceil(response.data.total / 10));
     } catch (error) {
-      console.error('Error fetching users:', error);
       toast.error('Gagal memuat data pengguna');
     } finally {
       setLoading(false);
@@ -76,7 +75,6 @@ const ManagerUsers = () => {
       const response = await apiClient.get('/users/stats');
       setStats(response.data);
     } catch (error) {
-      console.error('Error fetching user stats:', error);
     }
   };
 
@@ -85,7 +83,6 @@ const ManagerUsers = () => {
       const response = await apiClient.get('/users/roles');
       setRoles(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
-      console.error('Error fetching roles:', error);
     }
   };
 

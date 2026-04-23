@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   User,
   Mail,
@@ -51,7 +51,6 @@ const Profile = () => {
       setUser(userRes.data);
       setRoles(rolesRes.data.roles || []);
     } catch (error) {
-      console.error('Error fetching profile:', error);
       toast.error('Gagal memuat data profil');
     } finally {
       setLoading(false);

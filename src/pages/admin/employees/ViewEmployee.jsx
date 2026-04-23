@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit2, User, CreditCard, Briefcase, Calendar, Trash2 } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -21,7 +21,6 @@ const ViewEmployee = () => {
       const response = await apiClient.get(`/employees/${id}`);
       setEmployee(response.data);
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Gagal memuat data pegawai');
       navigate('/admin/employees');
     } finally {
@@ -35,7 +34,6 @@ const ViewEmployee = () => {
       toast.success('Pegawai berhasil dihapus');
       navigate('/admin/employees');
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Gagal menghapus pegawai');
     }
   };

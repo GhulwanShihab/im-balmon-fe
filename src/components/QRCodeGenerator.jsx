@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { Download, QrCode, X } from 'lucide-react';
 
@@ -39,7 +39,6 @@ const QRCodeGenerator = ({ device, isOpen, onClose }) => {
 
       setQRCodeDataURL(dataURL);
     } catch (error) {
-      console.error('Error generating QR code:', error);
       alert('Gagal membuat QR code');
     } finally {
       setLoading(false);

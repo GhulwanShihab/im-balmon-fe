@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, ImagePlus, X } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -23,7 +23,6 @@ const AddDevice = () => {
     e.preventDefault();
     setLoading(true);
 
-    console.log("📦 Data dikirim ke backend:", device);
 
     try {
       // 1️⃣ Simpan data perangkat dulu
@@ -45,7 +44,6 @@ const AddDevice = () => {
       alert('Perangkat dan foto berhasil ditambahkan');
       navigate('/admin/devices');
     } catch (error) {
-      console.error('Error adding device:', error);
 
       if (error.message === 'Session expired. Please login again.') {
         return;

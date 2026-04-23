@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   RotateCcw, 
@@ -42,25 +42,15 @@ const ReturnPage = () => {
         params: { page_size: 50 }
       });
 
-      console.log('Raw loans data:', response.data);
-      console.log('Loans array:', response.data.loans);
       
       // Debug: Cek status setiap loan
       if (response.data.loans) {
         response.data.loans.forEach((loan, index) => {
-          console.log(`Loan ${index + 1}:`, {
-            id: loan.id,
-            status: loan.status,
-            statusType: typeof loan.status,
-            device: loan.device?.device_name,
-            isActive: loan.status === 'active'
-          });
         });
       }
       
       setLoans(response.data.loans || []);
     } catch (error) {
-      console.error('Error fetching loans:', error);
       toast.error('Gagal memuat data peminjaman');
       
       // ✅ Handle error 401 (redirect ke login jika unauthorized)
@@ -73,7 +63,6 @@ const ReturnPage = () => {
   };
 
   const handleReturnDevice = async (loan) => {
-    console.log('Opening return modal for loan:', loan);
     setSelectedLoan(loan);
     
     // Jika loan_items tidak ada, fetch detail loan terlebih dahulu
@@ -81,10 +70,8 @@ const ReturnPage = () => {
       try {
         // ✅ Gunakan apiClient.get
         const response = await apiClient.get(`/loans/${loan.id}`);
-        console.log('Fetched loan detail:', response.data);
         setSelectedLoan(response.data);
       } catch (error) {
-        console.error('Error fetching loan detail:', error);
         toast.error('Gagal memuat detail peminjaman');
         return;
       }
@@ -108,7 +95,6 @@ const ReturnPage = () => {
         }))
       };
 
-      console.log('Payload pengembalian:', payload);
 
       const response = await apiClient.post(
         `/loans/${selectedLoan.id}/return`,
@@ -137,7 +123,6 @@ const ReturnPage = () => {
             }
           }
         } catch (uploadError) {
-          console.error('Error uploading evidence:', uploadError);
           toast.error('Pengembalian berhasil, tapi gagal upload foto bukti.');
         }
       }
@@ -151,7 +136,6 @@ const ReturnPage = () => {
       setEvidenceFiles({});
       fetchLoans();
     } catch (error) {
-      console.error('Return error:', error);
       const errorMessage = error.response?.data?.message || 'Gagal mengajukan pengembalian';
       toast.error(errorMessage);
       

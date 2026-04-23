@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -32,10 +32,8 @@ const ViewLoanDetailManager = () => {
       const response = await apiClient.get(`/loans/${id}`);
       const loanData = response.data?.loan || response.data?.data || response.data;
       
-      console.log('Loan detail:', loanData);
       setLoan(loanData);
     } catch (error) {
-      console.error('Error fetching loan detail:', error);
       alert('Gagal memuat data peminjaman');
       navigate('/manager/usage-reports');
     } finally {
@@ -68,7 +66,6 @@ const ViewLoanDetailManager = () => {
       
       alert(`✅ Berita Acara berhasil diunduh: ${filename}`);
     } catch (error) {
-      console.error('Error exporting PDF:', error);
       
       if (error.response?.status === 403) {
         alert('❌ Anda tidak memiliki akses untuk export data ini.\n\nSilakan hubungi administrator.');

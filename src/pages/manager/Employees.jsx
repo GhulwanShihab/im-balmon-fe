@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Eye, Search, ChevronLeft, ChevronRight, Filter, Users, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../services/api';
@@ -35,7 +35,6 @@ const ManagerEmployees = () => {
 
       applyFilters(data);
     } catch (error) {
-      console.error('Error fetching employees:', error);
       toast.error('Gagal memuat data pegawai.');
     } finally {
       setLoading(false);

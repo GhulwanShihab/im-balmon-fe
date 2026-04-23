@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Eye } from 'lucide-react';
 import apiClient from '../../services/api';
@@ -28,7 +28,6 @@ const ViewDeviceChildManager = () => {
       };
       setDeviceChild(normalized);
     } catch (error) {
-      console.error("Error fetching child device:", error);
       alert("Gagal memuat data perangkat anak");
       navigate("/manager/devices");
     } finally {

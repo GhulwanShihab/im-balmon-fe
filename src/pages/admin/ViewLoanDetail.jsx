@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -35,7 +35,6 @@ const ViewLoanDetail = () => {
       const loanData = response.data?.loan || response.data?.data || response.data;
       setLoan(loanData);
     } catch (error) {
-      console.error('Error fetching loan detail:', error);
       alert('Gagal memuat data peminjaman');
       navigate('/admin/usage-reports');
     } finally {

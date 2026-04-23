@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit2, Trash2, Eye, ChevronLeft, ChevronRight, Filter, Users, X } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -36,7 +36,6 @@ const Employees = () => {
 
       applyFilters(data);
     } catch (error) {
-      console.error('Error fetching employees:', error);
       alert('Gagal memuat data pegawai.');
     } finally {
       setLoading(false);
@@ -71,7 +70,6 @@ const Employees = () => {
       setShowDeleteModal(false);
       setEmployeeToDelete(null);
     } catch (error) {
-      console.error('Error deleting employee:', error);
       alert('Gagal menghapus pegawai.');
     }
   };

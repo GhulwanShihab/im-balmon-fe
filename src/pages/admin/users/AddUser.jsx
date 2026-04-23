@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import UserFormWithRoles from "./components/UserFormWithRoles";
 import { createUser, updateUserRole } from "./services/userService";
 import toast from "react-hot-toast";
@@ -24,7 +24,6 @@ const AddUser = () => {
         try {
           await updateUserRole(userIdToUse, { role_ids });
         } catch (roleError) {
-          console.error("Error assigning roles:", roleError);
           toast("Pengguna dibuat, tapi gagal assign role. Silakan edit role nanti.", { icon: "⚠️" });
         }
       }
@@ -36,7 +35,6 @@ const AddUser = () => {
         navigate("/admin/users");
       }, 1000);
     } catch (error) {
-      console.error("Error creating user:", error);
       
       // Handle different error scenarios
       if (error.response?.status === 400) {

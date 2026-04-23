@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import API_CONFIG from '../../config/api.js';
 import { TokenManager } from './TokenManager.js';
 
@@ -26,7 +26,6 @@ export const refreshAccessToken = async () => {
       throw new Error('No refresh token available');
     }
     
-    console.log('🔄 Attempting to refresh token...');
     
     const response = await axios.post(
       `${API_CONFIG.BASE_URL}${API_CONFIG.API_VERSION}/auth/refresh`,
@@ -43,10 +42,8 @@ export const refreshAccessToken = async () => {
     // Update tokens
     TokenManager.setTokens(access_token, refresh_token, expires_in || 1800);
     
-    console.log('✅ Token refreshed successfully');
     return access_token;
   } catch (error) {
-    console.error('❌ Token refresh failed:', error);
     
     // Clear tokens and redirect to login
     TokenManager.clearTokens();
@@ -67,7 +64,6 @@ export const setupAutoRefresh = () => {
     clearInterval(window.tokenRefreshInterval);
   }
 
-  console.log('✅ Auto-refresh enabled');
 
   // Check every 1 minute
   window.tokenRefreshInterval = setInterval(async () => {
@@ -76,12 +72,9 @@ export const setupAutoRefresh = () => {
     
     // ✅ FIX: Only refresh if BOTH tokens exist and token expiring soon
     if (token && refreshToken && TokenManager.isTokenExpiringSoon() && !isRefreshing) {
-      console.log('🔄 Token akan expire, melakukan auto-refresh...');
       try {
         await refreshAccessToken();
-        console.log('✅ Token berhasil di-refresh');
       } catch (error) {
-        console.error('❌ Auto-refresh gagal:', error);
       }
     }
   }, 60000); // Check every 1 minute
@@ -97,7 +90,6 @@ export const setupInterceptors = (apiClient) => {
                             config.url?.includes('/auth/refresh');
       
       if (isAuthEndpoint) {
-        console.log('🔵 Auth endpoint, skipping token refresh check');
         return config;
       }
       
@@ -106,13 +98,11 @@ export const setupInterceptors = (apiClient) => {
       const refreshToken = TokenManager.getRefreshToken();
       
       if (token && refreshToken && TokenManager.isTokenExpiringSoon() && !isRefreshing) {
-        console.log('🔄 Token expiring soon, refreshing...');
         try {
           const newToken = await refreshAccessToken();
           config.headers.Authorization = `Bearer ${newToken}`;
           return config;
         } catch (error) {
-          console.error('❌ Failed to refresh token in interceptor');
           return Promise.reject(error);
         }
       }
@@ -151,7 +141,6 @@ export const setupInterceptors = (apiClient) => {
         const refreshToken = TokenManager.getRefreshToken();
         
         if (!refreshToken) {
-          console.warn('⚠️ 401 error but no refresh token, redirecting to login');
           TokenManager.clearTokens();
           if (!window.location.pathname.includes('/login')) {
             window.location.href = '/login';

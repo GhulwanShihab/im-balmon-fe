@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Plus, Layers, FileDown } from "lucide-react";
 import apiClient from "../../../services/api";
 
@@ -23,7 +23,6 @@ const DevicesHeader = ({ navigate }) => {
         const parentCount = devices.filter((d) => !d.parent_id).length;
         setHasParentDevice(parentCount > 0);
       } catch (err) {
-        console.error("❌ Gagal memuat daftar perangkat:", err);
         setHasParentDevice(false);
       }
     };
@@ -57,15 +56,12 @@ const DevicesHeader = ({ navigate }) => {
         ? `/export/excel?${queryString}` 
         : `/export/excel`;
 
-      console.log("📤 Exporting with endpoint:", endpoint);
-      console.log("📋 Filters:", exportFilters);
 
       // Make API request to export endpoint
       // Gunakan axios langsung untuk lebih fleksibel
       const baseURL = apiClient.defaults?.baseURL || "";
       const fullURL = `${baseURL}/devices/export/excel${queryString ? '?' + queryString : ''}`;
       
-      console.log("🌐 Full URL:", fullURL);
 
       const response = await apiClient.get(`/devices/export/excel`, {
         params: {
@@ -76,7 +72,6 @@ const DevicesHeader = ({ navigate }) => {
         responseType: "blob", // Important for downloading files
       });
 
-      console.log("✅ Export response received");
 
       // Create blob from response
       const blob = new Blob([response.data], {
@@ -108,13 +103,6 @@ const DevicesHeader = ({ navigate }) => {
 
       alert("✅ File Excel berhasil diunduh!");
     } catch (error) {
-      console.error("❌ Error exporting to Excel:", error);
-      console.error("Error details:", {
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        url: error.config?.url,
-      });
       
       let errorMessage = "Gagal mengekspor data ke Excel. ";
       
@@ -134,9 +122,7 @@ const DevicesHeader = ({ navigate }) => {
     }
   };
 
-  // Generate year options (current year - 5 to current year + 1)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 7 }, (_, i) => currentYear - 5 + i);
+
 
   return (
     <>
@@ -203,7 +189,7 @@ const DevicesHeader = ({ navigate }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Semua Tahun</option>
-                  {yearOptions.map((year) => (
+                  {Array.from({ length: new Date().getFullYear() - 2019 }, (_, i) => 2020 + i).map((year) => (
                     <option key={year} value={year}>
                       {year}
                     </option>

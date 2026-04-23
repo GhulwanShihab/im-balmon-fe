@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FolderPlus,
@@ -54,7 +54,6 @@ const DeviceGroupsPage = () => {
       });
       setGroups(response.data.groups || []);
     } catch (error) {
-      console.error('Error fetching groups:', error);
       toast.error('Gagal memuat grup perangkat');
     } finally {
       setLoading(false);
@@ -68,7 +67,6 @@ const DeviceGroupsPage = () => {
       });
       setDevices(response.data.devices || []);
     } catch (error) {
-      console.error('Error fetching devices:', error);
     }
   };
 

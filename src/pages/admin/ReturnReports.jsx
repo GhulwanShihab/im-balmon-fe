@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { 
   RotateCcw, 
   Download, 
@@ -68,7 +68,6 @@ const ReturnReports = () => {
       });
       setConditionChanges(response.data || []);
     } catch (error) {
-      console.error('Error fetching condition changes:', error);
       setConditionChanges([]);
     }
   };
@@ -98,7 +97,6 @@ const ReturnReports = () => {
       setTotalPages(data.total_pages || 1);
       
     } catch (error) {
-      console.error('Error fetching loans:', error);
       setLoans([]);
     } finally {
       setLoading(false);
@@ -118,7 +116,6 @@ const ReturnReports = () => {
         cancelled_loans: data.cancelled_loans || 0
       });
     } catch (error) {
-      console.error('Error fetching loan stats:', error);
     }
   };
 
@@ -141,7 +138,6 @@ const ReturnReports = () => {
       window.URL.revokeObjectURL(url);
       
     } catch (error) {
-      console.error('Error exporting report:', error);
       alert('Gagal export laporan. Endpoint mungkin belum tersedia.');
     } finally {
       setExportingId(null);

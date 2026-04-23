@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, CreditCard, Briefcase, AlertCircle } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -22,7 +22,6 @@ const EditEmployee = () => {
       const response = await apiClient.get(`/employees/${id}`);
       setForm(response.data);
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Gagal memuat data pegawai');
       navigate('/admin/employees');
     } finally {
@@ -74,7 +73,6 @@ const EditEmployee = () => {
       toast.success('Pegawai berhasil diperbarui');
       navigate('/admin/employees');
     } catch (error) {
-      console.error('Error:', error);
       // Try to get specific detail string from backend first (e.g. FastAPI validation errors or custom HTTPException)
       const detail = error.response?.data?.detail;
       let errorMessage = 'Gagal memperbarui pegawai';

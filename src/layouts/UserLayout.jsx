@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
@@ -12,13 +12,25 @@ import {
   User,
   Bell
 } from 'lucide-react';
+import { TokenManager } from '../services/api';
 import logoBalmon from '../assets/logo-balmon.png';
 import logoKomdigi from '../assets/logo-komdigi.png';
 
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState('User');
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setUserName(user.nama || user.full_name || user.username || 'User');
+      } catch (e) { /* ignore */ }
+    }
+  }, []);
 
   const menuItems = [
     { icon: Home, label: 'Beranda', path: '/user' },
@@ -30,18 +42,7 @@ const UserLayout = () => {
   ];
 
   const handleLogout = () => {
-    // Clear all tokens and user data
-    localStorage.removeItem('token');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('rememberMe');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
-    sessionStorage.removeItem('user');
-    
-    // Redirect to login
+    TokenManager.clearTokens();
     navigate('/login', { replace: true });
   };
 
@@ -158,7 +159,7 @@ const UserLayout = () => {
               <User className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gray-900">User</p>
+              <p className="text-sm font-bold text-gray-900 truncate">{userName}</p>
               <p className="text-xs text-gray-500 font-semibold">Peminjam Aktif</p>
             </div>
           </div>

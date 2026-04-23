@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, CreditCard, Briefcase } from 'lucide-react';
 import apiClient from '../../services/api';
@@ -20,7 +20,6 @@ const ManagerViewEmployee = () => {
       const response = await apiClient.get(`/employees/${id}`);
       setEmployee(response.data);
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Gagal memuat data pegawai');
       navigate('/manager/employees');
     } finally {

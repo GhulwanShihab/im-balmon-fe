@@ -1,4 +1,4 @@
-// 🛠️ Utility Functions untuk Admin User Management
+﻿// 🛠️ Utility Functions untuk Admin User Management
 // File ini berisi helper functions yang bisa digunakan di berbagai komponen
 
 /**
@@ -252,7 +252,6 @@ export const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text);
     return true;
   } catch (err) {
-    console.error("Failed to copy:", err);
     return false;
   }
 };

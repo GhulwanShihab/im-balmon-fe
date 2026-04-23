@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Trash2, Edit, Eye } from "lucide-react";
 import { getRoles, updateUserRole } from "../services/userService";
@@ -13,7 +13,6 @@ const UserTable = ({ users, onDelete, loading }) => {
         const data = await getRoles();
         setRoles(data);
       } catch (error) {
-        console.error(error);
       }
     };
     fetchRoles();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 
 const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
@@ -141,7 +141,6 @@ const UserForm = ({ onSubmit, initialData = {}, isEdit = false }) => {
 
       await onSubmit(dataToSend);
     } catch (error) {
-      console.error("Form submission error:", error);
     } finally {
       setIsSubmitting(false);
     }

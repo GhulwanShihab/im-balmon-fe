@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Search, X } from "lucide-react";
 import apiClient from "../../../services/api";
@@ -38,7 +38,6 @@ const AddDeviceChild = () => {
           : res.data;
         setDevices(allDevices || []);
       } catch (err) {
-        console.error("❌ Gagal mengambil daftar perangkat parent:", err);
         setDevices([]);
       }
     };
@@ -53,7 +52,6 @@ const AddDeviceChild = () => {
         const data = Array.isArray(res.data) ? res.data : [];
         setLocations(data);
       } catch (err) {
-        console.error('❌ Gagal mengambil daftar lokasi:', err);
         setLocations([]);
       }
     };
@@ -87,7 +85,6 @@ const AddDeviceChild = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      console.log("📦 Data dikirim ke backend:", childDevice);
 
       const res = await apiClient.post("/device-children", childDevice);
       const newChild = res.data;
@@ -105,7 +102,6 @@ const AddDeviceChild = () => {
       alert("Device child berhasil ditambahkan!");
       navigate("/admin/devices");
     } catch (error) {
-      console.error("❌ Gagal menambahkan device child:", error);
       alert("Gagal menambahkan device child. Silakan coba lagi.");
     } finally {
       setLoading(false);

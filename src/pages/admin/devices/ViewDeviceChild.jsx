@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Eye, QrCode } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -28,7 +28,6 @@ const ViewDeviceChild = () => {
       };
       setDeviceChild(normalized);
     } catch (error) {
-      console.error("Error fetching child device:", error);
       alert("Gagal memuat data perangkat anak");
       navigate("/admin/devices");
     } finally {
@@ -43,7 +42,6 @@ const ViewDeviceChild = () => {
         alert("Perangkat anak berhasil dihapus");
         navigate("/admin/devices");
       } catch (error) {
-        console.error("Error deleting child device:", error);
         alert("Gagal menghapus perangkat anak");
       }
     }

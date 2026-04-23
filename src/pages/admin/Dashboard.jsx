@@ -17,17 +17,6 @@ import {
 } from 'lucide-react';
 import apiClient from '../../services/api';
 
-/**
- * ADMIN DASHBOARD - FULL CONTROL
- * 
- * Admin has all permissions including:
- * - Create, Read, Update, Delete operations for all entities
- * - User management and approvals
- * - Device management
- * - Loan management and approvals
- * - Full export capabilities
- */
-
 const Dashboard = () => {
   const [stats, setStats] = useState({
     devices: { 
@@ -70,27 +59,12 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
-      console.log('📊 Fetching dashboard data...');
-
       // Fetch all stats in parallel
       const [deviceStatsRes, userStatsRes, loanStatsRes, devicesRes] = await Promise.all([
-        apiClient.get('/devices/stats').catch(err => {
-          console.error('❌ Device stats error:', err);
-          return { data: null };
-        }),
-        apiClient.get('/users/stats').catch(err => {
-          console.error('❌ User stats error:', err);
-          return { data: null };
-        }),
-        apiClient.get('/loans/stats').catch(err => {
-          console.error('❌ Loan stats error:', err);
-          return { data: null };
-        }),
-        // ✅ Fetch actual devices data with valid page_size (max 100)
-        apiClient.get('/devices/', { params: { page: 1, page_size: 100 } }).catch(err => {
-          console.error('❌ Devices data error:', err);
-          return { data: { devices: [] } };
-        })
+        apiClient.get('/devices/stats').catch(() => ({ data: null })),
+        apiClient.get('/users/stats').catch(() => ({ data: null })),
+        apiClient.get('/loans/stats').catch(() => ({ data: null })),
+        apiClient.get('/devices/', { params: { page: 1, page_size: 100 } }).catch(() => ({ data: { devices: [] } }))
       ]);
 
       const deviceData = deviceStatsRes.data;
@@ -98,40 +72,17 @@ const Dashboard = () => {
       const loanData = loanStatsRes.data;
       const devicesData = devicesRes.data;
 
-      console.log('✅ Device stats response:', deviceData);
-      console.log('✅ Devices data response:', devicesData);
-
       // Calculate device conditions from actual device data
       const allDevices = devicesData?.devices || [];
-      
-      console.log('📦 Sample device data (first 3):', allDevices.slice(0, 3).map(d => ({
-        id: d.id,
-        name: d.device_name,
-        condition: d.device_condition,
-        status: d.device_status,
-        hasChildren: !!d.children,
-        childrenCount: d.children?.length || 0
-      })));
       
       // Flatten devices: include parent devices without children AND all child devices
       const flattenedDevices = allDevices.reduce((acc, device) => {
         if (device.children && device.children.length > 0) {
-          // If has children, count the children
-          console.log(`Parent "${device.device_name}" has ${device.children.length} children`);
           return [...acc, ...device.children];
         } else {
-          // If no children, count the parent device
-          console.log(`Device "${device.device_name}" has no children, counting as single device`);
           return [...acc, device];
         }
       }, []);
-
-      console.log('📦 Total flattened devices:', flattenedDevices.length);
-      console.log('📦 Sample flattened devices:', flattenedDevices.slice(0, 5).map(d => ({
-        name: d.device_name,
-        condition: d.device_condition,
-        status: d.device_status
-      })));
 
       // Count devices by condition
       const conditionCounts = {
@@ -143,10 +94,8 @@ const Dashboard = () => {
 
       flattenedDevices.forEach(device => {
         const condition = device.device_condition?.toUpperCase()?.trim();
-        console.log(`Device "${device.device_name}": condition = "${condition}" (type: ${typeof device.device_condition})`);
         
         if (!condition) {
-          console.warn(`⚠️ Device "${device.device_name}" has no condition field!`);
           conditionCounts.unknown++;
           return;
         }
@@ -162,17 +111,9 @@ const Dashboard = () => {
             conditionCounts.maintenance_condition++;
             break;
           default:
-            console.warn(`⚠️ Unknown condition for device "${device.device_name}": "${condition}"`);
             conditionCounts.unknown++;
         }
       });
-
-      console.log('📊 Condition counts:', conditionCounts);
-      console.log('📊 Breakdown:');
-      console.log('   - BAIK:', conditionCounts.good_condition);
-      console.log('   - RUSAK:', conditionCounts.damaged);
-      console.log('   - MAINTENANCE:', conditionCounts.maintenance_condition);
-      console.log('   - Unknown/Empty:', conditionCounts.unknown);
 
       // Count devices by status
       const statusCounts = {
@@ -181,47 +122,16 @@ const Dashboard = () => {
         maintenance: flattenedDevices.filter(d => d.device_status?.toUpperCase() === 'MAINTENANCE').length
       };
 
-      console.log('📊 Status counts:', statusCounts);
-
       // Parse device stats with calculated conditions
       const parsedDeviceStats = {
-        // ✅ Use flattened devices count for consistency
         total: flattenedDevices.length,
-        // ✅ Use calculated status counts for consistency
         available: statusCounts.available,
         in_use: statusCounts.in_use,
         maintenance: statusCounts.maintenance,
-        // Use calculated condition counts
         good_condition: conditionCounts.good_condition,
         damaged: conditionCounts.damaged,
         maintenance_condition: conditionCounts.maintenance_condition
       };
-
-      console.log('✅ Final device stats:', parsedDeviceStats);
-      console.log('✅ Verification:');
-      console.log('   Total devices:', parsedDeviceStats.total);
-      console.log('   Sum of conditions:', 
-        parsedDeviceStats.good_condition + 
-        parsedDeviceStats.damaged + 
-        parsedDeviceStats.maintenance_condition
-      );
-      console.log('   Condition match:', 
-        parsedDeviceStats.total === 
-        (parsedDeviceStats.good_condition + parsedDeviceStats.damaged + parsedDeviceStats.maintenance_condition)
-          ? '✅ YES' 
-          : '❌ NO - Unknown conditions: ' + conditionCounts.unknown
-      );
-      console.log('   Sum of statuses:', 
-        parsedDeviceStats.available + 
-        parsedDeviceStats.in_use + 
-        parsedDeviceStats.maintenance
-      );
-      console.log('   Status match:', 
-        parsedDeviceStats.total === 
-        (parsedDeviceStats.available + parsedDeviceStats.in_use + parsedDeviceStats.maintenance)
-          ? '✅ YES' 
-          : '❌ NO - Some devices have other status'
-      );
 
       // Parse user stats with flexible field mapping
       const parsedUserStats = {
@@ -252,7 +162,6 @@ const Dashboard = () => {
       });
 
     } catch (error) {
-      console.error('❌ Dashboard Error:', error);
       setError('Gagal memuat data dashboard. Silakan refresh halaman.');
     } finally {
       setLoading(false);

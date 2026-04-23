@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, CreditCard, Briefcase, AlertCircle } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -54,7 +54,6 @@ const AddEmployee = () => {
       toast.success('Pegawai berhasil ditambahkan');
       navigate('/admin/employees');
     } catch (error) {
-      console.error('Error:', error);
       // Try to get specific detail string from backend first (e.g. FastAPI validation errors or custom HTTPException)
       const detail = error.response?.data?.detail;
       let errorMessage = 'Gagal menambah pegawai';

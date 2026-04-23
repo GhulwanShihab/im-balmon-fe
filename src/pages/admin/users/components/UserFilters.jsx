@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { getRoles } from "../services/userService";
 
 const UserFilters = ({ filters, setFilters }) => {
@@ -10,7 +10,6 @@ const UserFilters = ({ filters, setFilters }) => {
         const data = await getRoles();
         setRoles(data);
       } catch (error) {
-        console.error("Error fetching roles:", error);
       }
     };
     fetchRoles();
@@ -37,7 +36,9 @@ const UserFilters = ({ filters, setFilters }) => {
           className="border rounded-lg p-2"
         >
           <option value="">Semua Role</option>
-          {roles.map((role) => (
+          {roles
+            .filter((role) => role.name !== 'superadmin')
+            .map((role) => (
             <option key={role.id} value={role.id}>
               {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
             </option>

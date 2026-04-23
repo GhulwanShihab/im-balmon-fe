@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { getPendingUsers, approveUser, rejectUser } from "./services/userService";
 import toast from "react-hot-toast";
 import { UserCheck, UserX, AlertCircle, Loader2, RefreshCw } from "lucide-react";
@@ -25,7 +25,6 @@ const PendingUsers = () => {
         page: data.page || 1,
       });
     } catch (error) {
-      console.error(error);
       toast.error(error.response?.data?.detail || "Gagal memuat pengguna pending");
     } finally {
       if (showLoader) setLoading(false);
@@ -46,7 +45,6 @@ const PendingUsers = () => {
       toast.success("✅ Pengguna berhasil disetujui");
       fetchPendingUsers(false);
     } catch (err) {
-      console.error(err);
       toast.error(err.response?.data?.detail || "Gagal menyetujui pengguna");
     }
   };
@@ -59,7 +57,6 @@ const PendingUsers = () => {
       toast.success("❌ Pengguna berhasil ditolak");
       fetchPendingUsers(false);
     } catch (err) {
-      console.error(err);
       toast.error(err.response?.data?.detail || "Gagal menolak pengguna");
     }
   };

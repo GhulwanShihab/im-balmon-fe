@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { UserCheck, UserX, Eye, Mail, Calendar } from 'lucide-react';
 import apiClient from '../../services/api';
 import toast from 'react-hot-toast';
@@ -19,7 +19,6 @@ const ManagerUserApprovals = () => {
       const response = await apiClient.get('/users/pending');
       setPendingUsers(response.data?.users || []);
     } catch (error) {
-      console.error('Error fetching pending users:', error);
       toast.error('Gagal memuat data pengguna pending');
     } finally {
       setLoading(false);
@@ -34,7 +33,6 @@ const ManagerUserApprovals = () => {
       toast.success('Pengguna berhasil disetujui');
       fetchPendingUsers();
     } catch (error) {
-      console.error('Error approving user:', error);
       toast.error(error.response?.data?.detail || 'Gagal menyetujui pengguna');
     }
   };
@@ -47,7 +45,6 @@ const ManagerUserApprovals = () => {
       toast.success('Pengguna berhasil ditolak');
       fetchPendingUsers();
     } catch (error) {
-      console.error('Error rejecting user:', error);
       toast.error(error.response?.data?.detail || 'Gagal menolak pengguna');
     }
   };

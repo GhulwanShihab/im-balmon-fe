@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { 
   Smartphone, 
@@ -45,7 +45,6 @@ const UserDashboard = () => {
       });
       setMyActiveLoans(response.data.total || 0);
     } catch (error) {
-      console.error('❌ Error fetching my loans count:', error);
       setMyActiveLoans(0);
     }
   };
@@ -60,21 +59,13 @@ const UserDashboard = () => {
         ...(statusFilter && { device_status: statusFilter })
       };
 
-      console.log('📡 Fetching devices with params:', params);
 
       const response = await apiClient.get('/devices/', { params });
       
-      console.log('✅ Devices response:', response.data);
 
       // Process devices - parent devices might have children
       const processedDevices = (response.data.devices || []).map(device => {
         // Log device structure to debug
-        console.log('Device structure:', {
-          id: device.id,
-          name: device.device_name,
-          hasChildren: !!device.children,
-          childrenCount: device.children?.length || 0
-        });
 
         return {
           ...device,
@@ -84,7 +75,6 @@ const UserDashboard = () => {
 
       setDevices(processedDevices);
     } catch (error) {
-      console.error('❌ Error fetching devices:', error);
       setDevices([]);
     } finally {
       setLoading(false);
@@ -114,7 +104,6 @@ const UserDashboard = () => {
       }
     }, []);
 
-    console.log('📊 Calculating stats from devices:', allDevices.length);
 
     const totalDevices = allDevices.length;
     const availableDevices = allDevices.filter(d => 
@@ -127,12 +116,6 @@ const UserDashboard = () => {
       d.device_status?.toUpperCase() === 'MAINTENANCE'
     ).length;
 
-    console.log('📊 Stats calculated:', {
-      total: totalDevices,
-      available: availableDevices,
-      borrowed: borrowedDevices,
-      maintenance: maintenanceDevices
-    });
 
     setStats({
       total_devices: totalDevices,
@@ -211,7 +194,6 @@ const UserDashboard = () => {
   };
 
   const handleBorrowDevice = (device) => {
-    console.log('🎯 Borrowing device:', device);
     navigate("/user/borrow", { 
       state: { 
         selectedDevice: device,

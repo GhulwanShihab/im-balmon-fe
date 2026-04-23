@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Smartphone, 
   FileText, 
-  RotateCcw, 
+  Briefcase, 
   BarChart3, 
   Users, 
   Menu, 
@@ -13,20 +13,32 @@ import {
   User,
   MapPin
 } from 'lucide-react';
+import { TokenManager } from '../services/api';
 import logoBalmon from '../assets/logo-balmon.png';
 import logoKomdigi from '../assets/logo-komdigi.png';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState('Admin');
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setUserName(user.nama || user.full_name || user.username || 'Admin');
+      } catch (e) { /* ignore */ }
+    }
+  }, []);
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Beranda', path: '/admin' },
     { icon: Smartphone, label: 'Data Perangkat', path: '/admin/devices' },
     { icon: FileText, label: 'Laporan Penggunaan', path: '/admin/usage-reports' },
     { icon: Smartphone, label: 'Perubahan Kondisi', path: '/admin/condition-request' },
-    { icon: RotateCcw, label: 'Pegawai', path: '/admin/employees' },
+    { icon: Briefcase, label: 'Pegawai', path: '/admin/employees' },
     //{ icon: BarChart3, label: 'Statistik', path: '/admin/statistics' },
     { icon: Users, label: 'Pengguna', path: '/admin/users' },
     { icon: MapPin, label: 'Lokasi', path: '/admin/locations' },
@@ -34,18 +46,7 @@ const AdminLayout = () => {
   ];
 
   const handleLogout = () => {
-    // Clear all tokens and user data
-    localStorage.removeItem('token');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('rememberMe');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
-    sessionStorage.removeItem('user');
-    
-    // Redirect to login
+    TokenManager.clearTokens();
     navigate('/login', { replace: true });
   };
 
@@ -132,7 +133,7 @@ const AdminLayout = () => {
               <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">Admin</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>
               <p className="text-xs text-gray-500 font-medium">Administrator</p>
             </div>
           </div>

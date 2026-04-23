@@ -1,4 +1,4 @@
-// 🎣 Custom React Hooks untuk Admin User Management
+﻿// 🎣 Custom React Hooks untuk Admin User Management
 // File ini berisi reusable hooks yang bisa digunakan di berbagai komponen
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -44,7 +44,6 @@ export const useFetch = (fetchFunction, dependencies = []) => {
       setData(result);
     } catch (err) {
       setError(err);
-      console.error("Fetch error:", err);
     } finally {
       setLoading(false);
     }
@@ -277,7 +276,6 @@ export const useLocalStorage = (key, initialValue) => {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error("Error reading from localStorage:", error);
       return initialValue;
     }
   });
@@ -288,7 +286,6 @@ export const useLocalStorage = (key, initialValue) => {
       setStoredValue(valueToStore);
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
-      console.error("Error writing to localStorage:", error);
     }
   }, [key, storedValue]);
 
@@ -297,7 +294,6 @@ export const useLocalStorage = (key, initialValue) => {
       window.localStorage.removeItem(key);
       setStoredValue(initialValue);
     } catch (error) {
-      console.error("Error removing from localStorage:", error);
     }
   }, [key, initialValue]);
 
@@ -414,7 +410,6 @@ export const useCopyToClipboard = () => {
 
   const copy = useCallback(async (text) => {
     if (!navigator?.clipboard) {
-      console.warn("Clipboard not supported");
       return false;
     }
 
@@ -423,7 +418,6 @@ export const useCopyToClipboard = () => {
       setCopiedText(text);
       return true;
     } catch (error) {
-      console.error("Copy failed:", error);
       setCopiedText(null);
       return false;
     }

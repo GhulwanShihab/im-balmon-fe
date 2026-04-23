@@ -1,4 +1,4 @@
-import apiClient from "../../../../services/api";
+﻿import apiClient from "../../../../services/api";
 
 const USER_ENDPOINT = "/users";
 const ROLE_ENDPOINT = "/users/roles";
@@ -16,7 +16,6 @@ export const getUsers = async (params = {}) => {
     const response = await apiClient.get(USER_ENDPOINT, { params: cleanParams });
     return response.data;
   } catch (error) {
-    console.error("Error fetching users:", error);
     throw error;
   }
 };
@@ -29,7 +28,6 @@ export const getUserById = async (id) => {
     const response = await apiClient.get(`${USER_ENDPOINT}/${id}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching user ${id}:`, error);
     throw error;
   }
 };
@@ -48,7 +46,6 @@ export const getUserWithRoles = async (id) => {
     }
     
     // Untuk error lain (404, 500, dll), skip dan return empty roles
-    console.warn(`Skip roles for user ${id}:`, error.response?.status || error.message);
     return { roles: [] };
   }
 };
@@ -61,7 +58,6 @@ export const getUserAccountStatus = async (id) => {
     const response = await apiClient.get(`${USER_ENDPOINT}/${id}/status`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching user ${id} status:`, error);
     throw error;
   }
 };
@@ -74,7 +70,6 @@ export const createUser = async (userData) => {
     const response = await apiClient.post(USER_ENDPOINT, userData);
     return response.data;
   } catch (error) {
-    console.error("Error creating user:", error);
     throw error;
   }
 };
@@ -87,7 +82,6 @@ export const updateUser = async (id, data) => {
     const response = await apiClient.put(`${USER_ENDPOINT}/${id}`, data);
     return response.data;
   } catch (error) {
-    console.error(`Error updating user ${id}:`, error);
     throw error;
   }
 };
@@ -102,7 +96,6 @@ export const updateUserStatus = async (id, is_active) => {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error updating user ${id} status:`, error);
     throw error;
   }
 };
@@ -115,7 +108,6 @@ export const deleteUser = async (id) => {
     const response = await apiClient.delete(`${USER_ENDPOINT}/${id}`);
     return response.data;
   } catch (error) {
-    console.error(`Error deleting user ${id}:`, error);
     throw error;
   }
 };
@@ -128,7 +120,6 @@ export const getUserStats = async () => {
     const response = await apiClient.get(`${USER_ENDPOINT}/stats`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching user stats:", error);
     throw error;
   }
 };
@@ -148,7 +139,6 @@ export const getPendingUsers = async (params = {}) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching pending users:", error);
     throw error;
   }
 };
@@ -161,7 +151,6 @@ export const approveUser = async (id) => {
     const response = await apiClient.patch(`${USER_ENDPOINT}/${id}/approve`);
     return response.data;
   } catch (error) {
-    console.error(`Error approving user ${id}:`, error);
     throw error;
   }
 };
@@ -174,7 +163,6 @@ export const rejectUser = async (id) => {
     const response = await apiClient.patch(`${USER_ENDPOINT}/${id}/reject`);
     return response.data;
   } catch (error) {
-    console.error(`Error rejecting user ${id}:`, error);
     throw error;
   }
 };
@@ -187,7 +175,6 @@ export const updateUserRole = async (id, data) => {
     const response = await apiClient.put(`${USER_ENDPOINT}/${id}/roles`, data);
     return response.data;
   } catch (error) {
-    console.error(`Error updating user ${id} roles:`, error);
     throw error;
   }
 };
@@ -200,7 +187,6 @@ export const getRoles = async () => {
     const response = await apiClient.get(ROLE_ENDPOINT);
     return response.data;
   } catch (error) {
-    console.error("Error fetching roles:", error);
     throw error;
   }
 };
@@ -213,7 +199,6 @@ export const unlockUserAccount = async (id) => {
     const response = await apiClient.post(`${USER_ENDPOINT}/${id}/unlock`);
     return response.data;
   } catch (error) {
-    console.error(`Error unlocking user ${id}:`, error);
     throw error;
   }
 };
@@ -226,7 +211,6 @@ export const getCurrentUser = async () => {
     const response = await apiClient.get(`${USER_ENDPOINT}/me`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching current user:", error);
     throw error;
   }
 };
@@ -239,7 +223,6 @@ export const getCurrentUserWithRoles = async () => {
     const response = await apiClient.get(`${USER_ENDPOINT}/me/roles`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching current user with roles:", error);
     throw error;
   }
 };
@@ -252,7 +235,6 @@ export const updateCurrentUser = async (data) => {
     const response = await apiClient.put(`${USER_ENDPOINT}/me`, data);
     return response.data;
   } catch (error) {
-    console.error("Error updating current user:", error);
     throw error;
   }
 };

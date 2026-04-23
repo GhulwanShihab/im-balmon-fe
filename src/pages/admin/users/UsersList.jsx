@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import {
   Users,
   UserCheck,
@@ -94,7 +94,6 @@ const AdminUserManagement = () => {
         });
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
       if (mountedRef.current && error.response?.status !== 401) {
         toast.error(error.response?.data?.detail || "Gagal memuat data pengguna");
       }
@@ -128,7 +127,6 @@ const AdminUserManagement = () => {
         });
       }
     } catch (error) {
-      console.error("Error fetching pending users:", error);
       
       if (error.response?.status !== 401 && mountedRef.current) {
         toast.error(error.response?.data?.detail || "Gagal memuat data pengguna pending");
@@ -151,7 +149,6 @@ const AdminUserManagement = () => {
         setRoles(Array.isArray(data) ? data : []);
       }
     } catch (error) {
-      console.error("Error fetching roles:", error);
     } finally {
       isFetchingRolesRef.current = false;
     }
@@ -176,7 +173,6 @@ const AdminUserManagement = () => {
         });
       }
     } catch (error) {
-      console.error("Error fetching stats:", error);
       // Don't show error toast for stats, as it's not critical
     }
   };
@@ -207,7 +203,6 @@ const AdminUserManagement = () => {
       await fetchUsers(false);
       await fetchStats();
     } catch (error) {
-      console.error("Error approving user:", error);
       toast.error(error.response?.data?.detail || "Gagal menyetujui pengguna");
     }
   };
@@ -227,7 +222,6 @@ const AdminUserManagement = () => {
       await fetchPendingUsers(false);
       await fetchStats();
     } catch (error) {
-      console.error("Error rejecting user:", error);
       toast.error(error.response?.data?.detail || "Gagal menolak pengguna");
     }
   };
@@ -260,7 +254,6 @@ const AdminUserManagement = () => {
       await fetchUsers(false);
       await fetchStats();
     } catch (error) {
-      console.error("Error deleting user:", error);
       toast.error(error.response?.data?.detail || "Gagal menghapus pengguna");
     }
   };
@@ -275,7 +268,6 @@ const AdminUserManagement = () => {
       await fetchUsers(false);
       await fetchStats();
     } catch (error) {
-      console.error("Error unlocking user:", error);
       toast.error(error.response?.data?.detail || "Gagal membuka kunci akun");
     }
   };
@@ -459,7 +451,9 @@ const AdminUserManagement = () => {
                   className="px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Semua Role</option>
-                  {roles.map((role) => (
+                  {roles
+                    .filter((role) => role.name !== 'superadmin')
+                    .map((role) => (
                     <option key={role.id} value={role.id}>
                       {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
                     </option>

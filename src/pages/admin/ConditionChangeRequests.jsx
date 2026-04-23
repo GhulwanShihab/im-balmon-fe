@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Eye, AlertTriangle, Clock, Package, ImageIcon } from "lucide-react";
+﻿import { useState, useEffect } from "react";
+import { CheckCircle, XCircle, Eye, AlertTriangle, Clock, Package, ImageIcon, RotateCcw, Calendar } from "lucide-react";
 import apiClient from "../../services/api";
 import { getMediaUrl } from "../../config/api";
 
@@ -14,6 +14,8 @@ const ConditionChangeRequests = () => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageModalUrl, setImageModalUrl] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
 
   useEffect(() => {
     fetchRequests();
@@ -25,7 +27,6 @@ const ConditionChangeRequests = () => {
       const response = await apiClient.get("/loans/condition-change-requests");
       setRequests(response.data || []);
     } catch (error) {
-      console.error("Error fetching condition change requests:", error);
       alert("Gagal memuat data permintaan perubahan kondisi.");
     } finally {
       setLoading(false);
@@ -40,7 +41,6 @@ const ConditionChangeRequests = () => {
       alert("Berhasil disetujui");
       fetchRequests();
     } catch (error) {
-      console.error(error);
       alert(error.response?.data?.detail || "Gagal menyetujui perubahan kondisi");
     }
   };
@@ -61,15 +61,32 @@ const ConditionChangeRequests = () => {
       setSelectedRequestId(null);
       fetchRequests();
     } catch (err) {
-      console.error(err);
       alert(err.response?.data?.detail || "Gagal menolak perubahan kondisi");
     }
   };
 
-  const filteredRequests =
-    filterStatus === "ALL"
-      ? requests
-      : requests.filter((req) => req.status === filterStatus);
+  const filteredRequests = requests.filter((req) => {
+    // Filter by status
+    if (filterStatus !== "ALL" && req.status !== filterStatus) return false;
+    // Filter by date range
+    if (filterDateFrom && req.requested_at) {
+      const reqDate = new Date(req.requested_at).toISOString().split('T')[0];
+      if (reqDate < filterDateFrom) return false;
+    }
+    if (filterDateTo && req.requested_at) {
+      const reqDate = new Date(req.requested_at).toISOString().split('T')[0];
+      if (reqDate > filterDateTo) return false;
+    }
+    return true;
+  });
+
+  const hasActiveFilters = filterStatus !== "ALL" || filterDateFrom || filterDateTo;
+
+  const handleResetFilters = () => {
+    setFilterStatus("ALL");
+    setFilterDateFrom("");
+    setFilterDateTo("");
+  };
 
   const getConditionBadge = (condition) => {
     const badges = {
@@ -243,21 +260,48 @@ const ConditionChangeRequests = () => {
             </p>
           </div>
 
-          {/* Filter Status */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-              Filter:
-            </label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-            >
-              <option value="ALL">Semua</option>
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-            </select>
+          {/* Filters */}
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Status</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value="ALL">Semua</option>
+                <option value="PENDING">Pending</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Dari Tanggal</label>
+              <input
+                type="date"
+                value={filterDateFrom}
+                onChange={(e) => setFilterDateFrom(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Sampai Tanggal</label>
+              <input
+                type="date"
+                value={filterDateTo}
+                onChange={(e) => setFilterDateTo(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              />
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset
+              </button>
+            )}
           </div>
         </div>
 

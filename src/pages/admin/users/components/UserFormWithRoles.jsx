@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, AlertCircle, CheckCircle, Shield } from "lucide-react";
 import { getRoles } from "../services/userService";
 import toast from "react-hot-toast";
@@ -29,7 +29,6 @@ const UserFormWithRoles = ({ onSubmit, initialData = {}, isEdit = false }) => {
           try {
             currentUserRoles = JSON.parse(currentUserRolesJson).map(r => r.name);
           } catch (e) {
-            console.error("Error parsing current user roles", e);
           }
         }
 
@@ -46,7 +45,6 @@ const UserFormWithRoles = ({ onSubmit, initialData = {}, isEdit = false }) => {
 
         setRoles(availableRoles);
       } catch (error) {
-        console.error("Error fetching roles:", error);
         toast.error("Gagal memuat daftar role");
         setRoles([]);
       } finally {
@@ -132,7 +130,6 @@ const UserFormWithRoles = ({ onSubmit, initialData = {}, isEdit = false }) => {
       }
       await onSubmit(dataToSend);
     } catch (error) {
-      console.error("Form submission error:", error);
       toast.error("Terjadi kesalahan saat menyimpan data");
     } finally {
       setIsSubmitting(false);

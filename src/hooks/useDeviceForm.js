@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import apiClient from '../services/api';
 
 export const useDeviceForm = (initialDeviceState = {}) => {
@@ -39,7 +39,6 @@ export const useDeviceForm = (initialDeviceState = {}) => {
           : [];
         setDevices(allDevices);
       } catch (err) {
-        console.error('❌ Gagal mengambil daftar perangkat:', err);
         setDevices([]);
       }
     };
@@ -55,7 +54,6 @@ export const useDeviceForm = (initialDeviceState = {}) => {
         const data = Array.isArray(res.data) ? res.data : [];
         setLocations(data);
       } catch (err) {
-        console.error('❌ Gagal mengambil daftar lokasi:', err);
         setLocations([]);
       }
     };

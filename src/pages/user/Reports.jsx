@@ -1,4 +1,4 @@
-// File: src/pages/user/Reports.jsx
+﻿// File: src/pages/user/Reports.jsx
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
@@ -66,7 +66,6 @@ const ReportsPage = () => {
       setLoans(response.data.loans || []);
       setTotalPages(Math.ceil((response.data.total || 0) / 10));
     } catch (error) {
-      console.error("Error fetching loans:", error);
       toast.error("Gagal memuat data laporan");
     } finally {
       setLoading(false);
@@ -91,7 +90,6 @@ const ReportsPage = () => {
 
       setStats(stats);
     } catch (error) {
-      console.error("Error fetching stats:", error);
     }
   };
 
@@ -105,7 +103,6 @@ const ReportsPage = () => {
       setSelectedLoan(response.data);
       setShowDetailModal(true);
     } catch (error) {
-      console.error("Error fetching loan detail:", error);
     }
   };
 
@@ -116,7 +113,6 @@ const ReportsPage = () => {
   const exportToPDF = async (loanId, loanNumber) => {
     try {
       setExportingId(loanId);
-      console.log(`📄 Starting PDF export for loan ID: ${loanId}`);
       
       const token = sessionStorage.getItem("token") || localStorage.getItem("token");
       
@@ -140,7 +136,6 @@ const ReportsPage = () => {
         }
       );
 
-      console.log('PDF Export response status:', response.status);
 
       // Handle unauthorized
       if (response.status === 401) {
@@ -154,7 +149,6 @@ const ReportsPage = () => {
 
       // Create blob and download
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      console.log('Blob size:', blob.size, 'bytes');
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -173,13 +167,11 @@ const ReportsPage = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      console.log('✅ PDF downloaded successfully:', filename);
       
       toast.dismiss(loadingToast);
       toast.success(`Berita Acara berhasil diunduh: ${filename}`);
       
     } catch (error) {
-      console.error("❌ Error exporting PDF:", error);
       
       // Handle different error types with proper messages
       if (error.response) {

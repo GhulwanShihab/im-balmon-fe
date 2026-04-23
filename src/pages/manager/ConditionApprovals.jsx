@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Eye, AlertTriangle, Clock, Package, ImageIcon } from "lucide-react";
 import apiClient from "../../services/api";
 import { getMediaUrl } from "../../config/api";
@@ -26,7 +26,6 @@ const ManagerConditionApprovals = () => {
       const response = await apiClient.get("/loans/condition-change-requests");
       setRequests(response.data || []);
     } catch (error) {
-      console.error("Error fetching condition change requests:", error);
       toast.error("Gagal memuat data permintaan perubahan kondisi.");
     } finally {
       setLoading(false);
@@ -41,7 +40,6 @@ const ManagerConditionApprovals = () => {
       toast.success("Perubahan kondisi berhasil disetujui");
       fetchRequests();
     } catch (error) {
-      console.error(error);
       toast.error(error.response?.data?.detail || "Gagal menyetujui perubahan kondisi");
     }
   };
@@ -62,7 +60,6 @@ const ManagerConditionApprovals = () => {
       setSelectedRequestId(null);
       fetchRequests();
     } catch (err) {
-      console.error(err);
       toast.error(err.response?.data?.detail || "Gagal menolak perubahan kondisi");
     }
   };

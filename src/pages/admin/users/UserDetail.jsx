@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getUserById, getUserWithRoles, getUserAccountStatus } from "./services/userService";
 import toast from "react-hot-toast";
@@ -43,7 +43,6 @@ const UserDetail = () => {
         setUserWithRoles(rolesData);
         setAccountStatus(statusData);
       } catch (err) {
-        console.error("Error fetching user detail:", err);
         setError(err.response?.data?.detail || "Gagal memuat detail pengguna");
         toast.error("Gagal memuat detail pengguna");
       } finally {

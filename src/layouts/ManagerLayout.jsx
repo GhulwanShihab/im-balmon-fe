@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Smartphone, 
   FileText, 
-  RotateCcw, 
+  Briefcase, 
   BarChart3, 
   Users, 
   Menu, 
@@ -14,38 +14,39 @@ import {
   CheckCircle,
   UserCheck
 } from 'lucide-react';
+import { TokenManager } from '../services/api';
 import logoBalmon from '../assets/logo-balmon.png';
 import logoKomdigi from '../assets/logo-komdigi.png';
 
 const ManagerLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState('Manager');
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Menu items disesuaikan dengan permission manager (read-only + approval)
+  useEffect(() => {
+    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setUserName(user.nama || user.full_name || user.username || 'Manager');
+      } catch (e) { /* ignore */ }
+    }
+  }, []);
+
+  // Menu items disesuaikan dengan permission manager (read-only, tanpa approval)
   const menuItems = [
     { icon: LayoutDashboard, label: 'Beranda', path: '/manager' },
     { icon: Smartphone, label: 'Data Perangkat', path: '/manager/devices' },
     { icon: FileText, label: 'Laporan Penggunaan', path: '/manager/usage-reports' },
-    { icon: CheckCircle, label: 'Persetujuan Kondisi', path: '/manager/condition-approvals' },
-    { icon: RotateCcw, label: 'Data Pegawai', path: '/manager/employees' },
+    { icon: Briefcase, label: 'Data Pegawai', path: '/manager/employees' },
     //{ icon: BarChart3, label: 'Statistik', path: '/manager/statistics' },
-    { icon: UserCheck, label: 'Persetujuan User', path: '/manager/user-approvals' },
     { icon: Users, label: 'Daftar Pengguna', path: '/manager/users' },
     { icon: User, label: 'Profil', path: '/manager/profile' },
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('rememberMe');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
-    sessionStorage.removeItem('user');
-    
+    TokenManager.clearTokens();
     navigate('/login', { replace: true });
   };
 
@@ -132,8 +133,8 @@ const ManagerLayout = () => {
               <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">Manager</p>
-              <p className="text-xs text-gray-500 font-medium">Supervisor</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>
+              <p className="text-xs text-gray-500 font-medium">Pimpinan</p>
             </div>
           </div>
           <button

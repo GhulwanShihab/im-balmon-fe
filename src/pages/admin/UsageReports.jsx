@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, 
@@ -9,7 +9,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  FileDown
+  FileDown,
+  ArrowUpDown,
+  RotateCcw
 } from 'lucide-react';
 import apiClient from '../../services/api';
 
@@ -31,6 +33,7 @@ const UsageReports = () => {
   
   const [filters, setFilters] = useState({
     borrower_name: '',
+    activity_name: '',
     assignment_letter_number: '',
     status: '',
     loan_start_date_from: '',
@@ -57,6 +60,7 @@ const UsageReports = () => {
       };
 
       if (filters.borrower_name) params.borrower_name = filters.borrower_name;
+      if (filters.activity_name) params.activity_name = filters.activity_name;
       if (filters.assignment_letter_number) params.assignment_letter_number = filters.assignment_letter_number;
       if (filters.status) params.status = filters.status;
       if (filters.loan_start_date_from) params.loan_start_date_from = filters.loan_start_date_from;
@@ -72,7 +76,6 @@ const UsageReports = () => {
       setTotalPages(data.total_pages || 1);
       
     } catch (error) {
-      console.error('Error fetching loan data:', error);
       setLoanData([]);
     } finally {
       setLoading(false);
@@ -91,20 +94,17 @@ const UsageReports = () => {
         most_loaned_device: data.most_borrowed_device || null
       });
     } catch (error) {
-      console.error('Error fetching summary:', error);
     }
   };
 
   const handleExportPDF = async (loanId, loanNumber) => {
     try {
       setExportingId(loanId);
-      console.log(`📄 Starting PDF export for loan ID: ${loanId}`);
       
       const response = await apiClient.get(`/loans/${loanId}/export-pdf`, {
         responseType: 'blob'
       });
       
-      console.log('✅ PDF export successful, downloading file...');
       
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
@@ -121,11 +121,9 @@ const UsageReports = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
       
-      console.log('✅ PDF downloaded successfully:', filename);
       alert(`Berita Acara berhasil diunduh: ${filename}`);
       
     } catch (error) {
-      console.error('❌ Error exporting PDF:', error);
       
       if (error.response?.status === 404) {
         alert('Data peminjaman tidak ditemukan.');
@@ -200,6 +198,29 @@ const UsageReports = () => {
     setCurrentPage(1);
   };
 
+  const handleResetFilters = () => {
+    setFilters({
+      borrower_name: '',
+      activity_name: '',
+      assignment_letter_number: '',
+      status: '',
+      loan_start_date_from: '',
+      loan_start_date_to: '',
+      sort_by: 'loan_start_date',
+      sort_order: 'desc'
+    });
+    setCurrentPage(1);
+  };
+
+  const toggleSortOrder = () => {
+    handleFilterChange('sort_order', filters.sort_order === 'desc' ? 'asc' : 'desc');
+  };
+
+  const hasActiveFilters = filters.borrower_name || filters.activity_name || 
+    filters.assignment_letter_number || filters.status || 
+    filters.loan_start_date_from || filters.loan_start_date_to ||
+    filters.sort_by !== 'loan_start_date' || filters.sort_order !== 'desc';
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -244,6 +265,18 @@ const UsageReports = () => {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Filter & Pencarian</h3>
+          {hasActiveFilters && (
+            <button
+              onClick={handleResetFilters}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors px-2 py-1 rounded-md hover:bg-red-50"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset Filter
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nama Peminjam</label>
@@ -252,6 +285,17 @@ const UsageReports = () => {
               placeholder="Cari nama peminjam..."
               value={filters.borrower_name}
               onChange={(e) => handleFilterChange('borrower_name', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Kegiatan</label>
+            <input
+              type="text"
+              placeholder="Cari nama kegiatan..."
+              value={filters.activity_name}
+              onChange={(e) => handleFilterChange('activity_name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -284,23 +328,37 @@ const UsageReports = () => {
           
           <div>
              <label className="block text-sm font-medium text-gray-700 mb-1">
-               Urutkan berdasarkan
+               Urutkan
              </label>
-             <select
-               value={filters.sort_by}
-               onChange={(e) => handleFilterChange('sort_by', e.target.value)}
-               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-             >
-               <option value="loan_start_date">Tanggal Mulai</option>
-               <option value="loan_end_date">Tanggal Berakhir</option>
-               <option value="borrower_name">Nama Peminjam</option>
-               <option value="created_at">Tanggal Dibuat</option>
-             </select>
+             <div className="flex gap-2">
+               <select
+                 value={filters.sort_by}
+                 onChange={(e) => handleFilterChange('sort_by', e.target.value)}
+                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+               >
+                 <option value="loan_start_date">Tgl Mulai</option>
+                 <option value="loan_end_date">Tgl Berakhir</option>
+                 <option value="borrower_name">Nama Peminjam</option>
+                 <option value="created_at">Tgl Dibuat</option>
+               </select>
+               <button
+                 onClick={toggleSortOrder}
+                 className={`px-3 py-2 border rounded-md transition-colors flex items-center gap-1 text-xs font-medium ${
+                   filters.sort_order === 'asc'
+                     ? 'bg-blue-50 border-blue-300 text-blue-700'
+                     : 'bg-gray-50 border-gray-300 text-gray-700'
+                 } hover:bg-blue-100`}
+                 title={filters.sort_order === 'asc' ? 'Urutan: Terlama' : 'Urutan: Terbaru'}
+               >
+                 <ArrowUpDown className="w-3.5 h-3.5" />
+                 {filters.sort_order === 'asc' ? 'Asc' : 'Desc'}
+               </button>
+             </div>
            </div>
           
           <div>
              <label className="block text-sm font-medium text-gray-700 mb-1">
-               Mulai (Dari)
+               Tgl Pinjam Dari
              </label>
              <input
                type="date"
@@ -312,7 +370,7 @@ const UsageReports = () => {
 
            <div>
              <label className="block text-sm font-medium text-gray-700 mb-1">
-               Mulai (Sampai)
+               Tgl Pinjam Sampai
              </label>
              <input
                type="date"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, 
@@ -55,7 +55,6 @@ const Devices = () => {
       setDevices(Array.isArray(devicesData) ? devicesData : []);
       setTotalPages(Math.ceil(totalCount / 10));
     } catch (error) {
-      console.error('Error fetching devices:', error);
       
       // Show user-friendly error message
       if (error.message === 'Session expired. Please login again.') {
@@ -79,7 +78,6 @@ const Devices = () => {
         fetchDevices();
         alert('Perangkat berhasil dihapus');
       } catch (error) {
-        console.error('Error deleting device:', error);
         
         if (error.message === 'Session expired. Please login again.') {
           return;

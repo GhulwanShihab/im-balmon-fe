@@ -22,66 +22,39 @@ const LoginPage = () => {
     e.preventDefault();
     
     // Prevent double submission
-    if (loading) {
-      console.log('⚠️ Already processing, ignoring duplicate submit');
-      return;
-    }
+    if (loading) return;
     
     setLoading(true);
-    
-    console.log('%c🔵 ========== LOGIN STARTED ==========', 'color: blue; font-weight: bold; font-size: 14px');
-    console.log('🔵 Step 1: Form data:', { email: formData.email, password: '***' });
-    console.log('🔵 Remember me:', rememberMe);
 
     try {
-      // Step 2: Login API call
-      console.log('🔵 Step 2: Calling /auth/login...');
-      console.log('🔵 Request URL:', `${apiClient.defaults.baseURL}/auth/login`);
-      
       const loginResponse = await apiClient.post('/auth/login', {
         email: formData.email,
         password: formData.password
       });
       
-      console.log('✅ Step 2: Login successful!', loginResponse.data);
-      
       const { access_token, refresh_token, expires_in } = loginResponse.data;
       
       if (!access_token) {
-        throw new Error('❌ No access token in response!');
+        throw new Error('No access token in response');
       }
 
-      // Step 3: Store rememberMe preference FIRST
-      console.log('🔵 Step 3: Storing rememberMe preference...');
+      // Store rememberMe preference
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
-        console.log('✅ Using localStorage (rememberMe = true)');
       } else {
         sessionStorage.setItem('rememberMe', 'false');
-        console.log('✅ Using sessionStorage (rememberMe = false)');
       }
 
-      // Step 4: Store tokens
-      console.log('🔵 Step 4: Storing tokens...');
+      // Store tokens
       const expiresInSeconds = expires_in || 1800;
       TokenManager.setTokens(access_token, refresh_token, expiresInSeconds);
-      console.log('✅ Step 4: Tokens stored');
-      
-      // Verify tokens
-      const storedToken = TokenManager.getAccessToken();
-      console.log('Verification - Token stored:', storedToken ? '✅ YES' : '❌ NO');
 
-      // Step 5: Get user data
-      console.log('🔵 Step 5: Fetching user data...');
+      // Get user data
       const userResponse = await apiClient.get('/users/me');
       const userData = userResponse.data;
-      console.log('✅ Step 5: User data:', userData);
 
-      // Step 6: Validate user status
-      console.log('🔵 Step 6: Validating user...');
-      
+      // Validate user status
       if (!userData.is_active) {
-        console.log('❌ User is NOT ACTIVE');
         toast.error('Akun Anda tidak aktif. Hubungi administrator.');
         TokenManager.clearTokens();
         setLoading(false);
@@ -89,46 +62,30 @@ const LoginPage = () => {
       }
 
       if (!userData.is_verified) {
-        console.log('❌ User is NOT VERIFIED');
         toast.error('Akun Anda belum disetujui oleh admin. Silakan tunggu persetujuan.');
         TokenManager.clearTokens();
         setLoading(false);
         return;
       }
-      
-      console.log('✅ Step 6: User OK (active & verified)');
 
-      // Step 7: Get roles
-      console.log('🔵 Step 7: Fetching roles...');
+      // Get roles
       const rolesResponse = await apiClient.get('/users/me/roles');
       const roles = rolesResponse.data.roles || [];
-      console.log('✅ Step 7: Roles:', roles);
 
-      // Step 8: Store user data and roles
-      console.log('🔵 Step 8: Storing user data and roles...');
+      // Store user data and roles
       const storage = rememberMe ? localStorage : sessionStorage;
-      
       storage.setItem('user', JSON.stringify(userData));
       storage.setItem('roles', JSON.stringify(roles));
-      console.log('✅ Step 8: Data stored in', rememberMe ? 'localStorage' : 'sessionStorage');
 
-      // Step 9: Determine redirect
-      console.log('🔵 Step 9: Determining redirect...');
+      // Determine redirect
       const roleNames = roles.map((r) => r.name);
-      console.log('Role names:', roleNames);
-      
       const userName = userData.full_name || userData.username || 'User';
-      let redirectPath = '/user'; // Default
+      let redirectPath = '/user';
       
       if (roleNames.includes('superadmin') || roleNames.includes('admin') || roleNames.includes('pimpinan')) {
         redirectPath = '/admin';
-        console.log('✅ Redirect to: /admin (Admin/Pimpinan)');
       } else if (roleNames.includes('manager')) {
         redirectPath = '/manager';
-        console.log('✅ Redirect to: /manager (Manager)');
-      } else {
-        redirectPath = '/user';
-        console.log('✅ Redirect to: /user (User)');
       }
 
       // Show success toast
@@ -137,32 +94,12 @@ const LoginPage = () => {
         duration: 2000,
       });
 
-      console.log('🔵 Step 10: Redirecting...');
-      console.log('Target path:', redirectPath);
-      
-      // Wait a moment for toast to show
+      // Wait a moment for toast to show, then redirect
       setTimeout(() => {
-        console.log('🔵 Executing redirect NOW');
         window.location.href = redirectPath;
       }, 300);
 
-      console.log('%c✅ ========== LOGIN COMPLETED ==========', 'color: green; font-weight: bold; font-size: 14px');
-
     } catch (err) {
-      console.error('%c❌ ========== LOGIN ERROR ==========', 'color: red; font-weight: bold; font-size: 14px');
-      console.error('❌ Error:', err);
-      
-      if (err.response) {
-        console.error('❌ Status:', err.response.status);
-        console.error('❌ Data:', err.response.data);
-        console.error('❌ Headers:', err.response.headers);
-      } else if (err.request) {
-        console.error('❌ No response from server');
-        console.error('❌ Request:', err.request);
-      } else {
-        console.error('❌ Error message:', err.message);
-      }
-
       let errorMessage = 'Terjadi kesalahan saat login';
 
       if (err.response) {
@@ -195,9 +132,6 @@ const LoginPage = () => {
       toast.error(errorMessage, { duration: 4000 });
       TokenManager.clearTokens();
       setLoading(false);
-      
-    } finally {
-      console.log('%c========================================', 'color: gray');
     }
   };
 

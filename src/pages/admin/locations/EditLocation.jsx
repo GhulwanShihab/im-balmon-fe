@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Radio, DoorOpen } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -29,7 +29,6 @@ const EditLocation = () => {
         description: data.description || '',
       });
     } catch (err) {
-      console.error('Error fetching location:', err);
       toast.error('Gagal memuat data lokasi');
       navigate('/admin/locations');
     } finally {
@@ -50,7 +49,6 @@ const EditLocation = () => {
       toast.success(`${form.type === 'STASIUN' ? 'Stasiun' : 'Ruangan'} berhasil diperbarui`);
       navigate('/admin/locations');
     } catch (error) {
-      console.error('Error updating location:', error);
       if (error.message === 'Session expired. Please login again.') return;
       toast.error(`Gagal memperbarui ${form.type === 'STASIUN' ? 'stasiun' : 'ruangan'}`);
     } finally {

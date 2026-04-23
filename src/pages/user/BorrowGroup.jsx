@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   CheckCircle,
@@ -43,6 +43,18 @@ const BorrowGroupPage = () => {
       return;
     }
 
+    // Auto-fill borrower name from logged-in user
+    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        const name = user.nama || user.full_name || user.username || '';
+        if (name) {
+          setFormData(prev => ({ ...prev, borrower_name: name }));
+        }
+      } catch (e) { /* ignore */ }
+    }
+
     fetchGroupDetail();
     fetchEmployees();
   }, [group]);
@@ -63,7 +75,6 @@ const BorrowGroupPage = () => {
       const response = await apiClient.get('/employees/');
       setEmployees(response.data.employees || response.data || []);
     } catch (error) {
-      console.error('Error fetching employees:', error);
       toast.error('Gagal memuat data pegawai');
     } finally {
       setEmployeeLoading(false);
@@ -210,10 +221,9 @@ const BorrowGroupPage = () => {
               <input
                 type="text"
                 value={formData.borrower_name}
-                onChange={handleInputChange('borrower_name')}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
-                placeholder="Masukkan nama peminjam"
-                required
+                readOnly
+                className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-700 cursor-not-allowed"
+                placeholder="Nama terisi otomatis"
               />
             </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -41,7 +41,6 @@ const EditDeviceChild = () => {
       const data = Array.isArray(res.data) ? res.data : [];
       setLocations(data);
     } catch (err) {
-      console.error('❌ Gagal mengambil daftar lokasi:', err);
       setLocations([]);
     }
   };
@@ -54,12 +53,10 @@ const EditDeviceChild = () => {
     try {
       const response = await apiClient.get(`/device-children/${id}`);
       const data = response.data?.device_child || response.data?.data || response.data;
-      console.log("Fetched child device:", data);
 
       setDevice(data);
       setExistingPhotos(data.photos || []);
     } catch (error) {
-      console.error('Error fetching child device:', error);
       toast.error('Gagal memuat data perangkat anak');
       navigate('/admin/devices');
     } finally {
@@ -72,7 +69,6 @@ const EditDeviceChild = () => {
     setLoading(true);
 
     try {
-      console.log('Updating child device:', device);
 
       const response = await apiClient.put(`/device-children/${id}`, device);
 
@@ -89,7 +85,6 @@ const EditDeviceChild = () => {
       toast.success('Perangkat anak berhasil diperbarui');
       navigate('/admin/devices');
     } catch (error) {
-      console.error('Error updating device child:', error);
       toast.error('Gagal memperbarui perangkat anak');
     } finally {
       setLoading(false);
@@ -119,7 +114,6 @@ const EditDeviceChild = () => {
       setExistingPhotos((prev) => prev.filter((p) => p.id !== photoId));
       toast.success('Foto dihapus');
     } catch (err) {
-      console.error(err);
       toast.error('Gagal menghapus foto');
     }
   };

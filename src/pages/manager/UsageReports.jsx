@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -67,7 +67,6 @@ const ManagerUsageReports = () => {
       setTotalPages(data.total_pages || 1);
       
     } catch (error) {
-      console.error('Error fetching loan data:', error);
       setLoanData([]);
     } finally {
       setLoading(false);
@@ -86,7 +85,6 @@ const ManagerUsageReports = () => {
         most_loaned_device: data.most_borrowed_device || null
       });
     } catch (error) {
-      console.error('Error fetching summary:', error);
     }
   };
 
@@ -116,7 +114,6 @@ const ManagerUsageReports = () => {
       alert(`Berita Acara berhasil diunduh: ${filename}`);
       
     } catch (error) {
-      console.error('Error exporting PDF:', error);
       alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
     } finally {
       setExportingId(null);

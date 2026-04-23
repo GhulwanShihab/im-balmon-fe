@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, Radio, DoorOpen } from 'lucide-react';
 import apiClient from '../../../services/api';
@@ -29,7 +29,6 @@ const AddLocation = () => {
       toast.success(`${form.type === 'STASIUN' ? 'Stasiun' : 'Ruangan'} berhasil ditambahkan`);
       navigate('/admin/locations');
     } catch (error) {
-      console.error('Error adding location:', error);
       if (error.message === 'Session expired. Please login again.') return;
       toast.error(`Gagal menambahkan ${form.type === 'STASIUN' ? 'stasiun' : 'ruangan'}`);
     } finally {
