@@ -40,6 +40,9 @@ const DeviceGroupsPage = () => {
     device_ids: [],
     child_device_ids: []
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState(null);
+  const [originalGroupSelected, setOriginalGroupSelected] = useState({ device_ids: [], child_device_ids: [] });
 
   useEffect(() => {
     fetchGroups();
@@ -70,7 +73,7 @@ const DeviceGroupsPage = () => {
     }
   };
 
-  const handleCreateGroup = async () => {
+  const handleSubmitGroup = async () => {
     if (!groupForm.name.trim()) {
       toast.error('Nama grup harus diisi');
       return;
@@ -83,13 +86,38 @@ const DeviceGroupsPage = () => {
 
     try {
       setLoading(true);
-      await apiClient.post('/device-groups/', groupForm);
-      toast.success('Grup berhasil dibuat!');
+      if (isEditing) {
+        await apiClient.put(`/device-groups/${editingGroupId}`, {
+          name: groupForm.name,
+          description: groupForm.description
+        });
+
+        const toRemoveDevices = originalGroupSelected.device_ids.filter(id => !groupForm.device_ids.includes(id));
+        const toRemoveChilds = originalGroupSelected.child_device_ids.filter(id => !groupForm.child_device_ids.includes(id));
+
+        const toAddDevices = groupForm.device_ids.filter(id => !originalGroupSelected.device_ids.includes(id));
+        const toAddChilds = groupForm.child_device_ids.filter(id => !originalGroupSelected.child_device_ids.includes(id));
+
+        if (toRemoveDevices.length > 0 || toRemoveChilds.length > 0) {
+          await apiClient.delete(`/device-groups/${editingGroupId}/devices`, {
+            data: { device_ids: toRemoveDevices, child_device_ids: toRemoveChilds }
+          });
+        }
+        if (toAddDevices.length > 0 || toAddChilds.length > 0) {
+          await apiClient.post(`/device-groups/${editingGroupId}/devices`, {
+            device_ids: toAddDevices, child_device_ids: toAddChilds
+          });
+        }
+        toast.success('Grup berhasil diperbarui!');
+      } else {
+        await apiClient.post('/device-groups/', groupForm);
+        toast.success('Grup berhasil dibuat!');
+      }
       setShowCreateModal(false);
       resetForm();
       fetchGroups();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Gagal membuat grup');
+      toast.error(error.response?.data?.detail || 'Gagal menyimpan grup');
     } finally {
       setLoading(false);
     }
@@ -113,6 +141,32 @@ const DeviceGroupsPage = () => {
       setSelectedGroup(response.data);
     } catch (error) {
       toast.error('Gagal memuat detail grup');
+    }
+  };
+
+  const handleEditGroupClick = async (groupId) => {
+    try {
+      const response = await apiClient.get(`/device-groups/${groupId}`);
+      const groupData = response.data;
+      
+      const parentIds = groupData.devices.filter(d => !d.child_device_id).map(d => d.device_id);
+      const childIds = groupData.devices.filter(d => d.child_device_id).map(d => d.child_device_id);
+      
+      setGroupForm({
+        name: groupData.name,
+        description: groupData.description || '',
+        device_ids: parentIds,
+        child_device_ids: childIds
+      });
+      setOriginalGroupSelected({
+        device_ids: parentIds,
+        child_device_ids: childIds
+      });
+      setEditingGroupId(groupId);
+      setIsEditing(true);
+      setShowCreateModal(true);
+    } catch (error) {
+      toast.error('Gagal memuat detail grup untuk diedit');
     }
   };
 
@@ -153,6 +207,9 @@ const DeviceGroupsPage = () => {
       device_ids: [],
       child_device_ids: []
     });
+    setIsEditing(false);
+    setEditingGroupId(null);
+    setOriginalGroupSelected({ device_ids: [], child_device_ids: [] });
   };
 
   const filteredGroups = groups.filter(group =>
@@ -305,8 +362,17 @@ const DeviceGroupsPage = () => {
                   </button>
                   
                   <button
+                    onClick={() => handleEditGroupClick(group.id)}
+                    className="text-amber-600 hover:text-amber-700 p-1.5"
+                    title="Edit Grup"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+
+                  <button
                     onClick={() => handleDeleteGroup(group.id)}
                     className="text-red-600 hover:text-red-700 p-1.5"
+                    title="Hapus Grup"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -322,7 +388,7 @@ const DeviceGroupsPage = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Buat Grup Perangkat Baru</h2>
+              <h2 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Grup Perangkat' : 'Buat Grup Perangkat Baru'}</h2>
               <button
                 onClick={() => {
                   setShowCreateModal(false);
@@ -399,14 +465,16 @@ const DeviceGroupsPage = () => {
                           {/* Parent Device */}
                           <div className={`p-3 flex items-center justify-between ${!isAvailable ? 'bg-gray-50' : ''}`}>
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={isParentSelected}
-                                onChange={() => toggleDeviceSelection(device.id, false)}
-                                disabled={!isAvailable}
-                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 disabled:opacity-50"
-                              />
-                              <div className="flex-1 min-w-0">
+                              {!hasChildren && (
+                                <input
+                                  type="checkbox"
+                                  checked={isParentSelected}
+                                  onChange={() => toggleDeviceSelection(device.id, false)}
+                                  disabled={!isAvailable}
+                                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 disabled:opacity-50"
+                                />
+                              )}
+                              <div className={`flex-1 min-w-0 ${hasChildren ? 'pl-2' : ''}`}>
                                 <h4 className="font-medium text-gray-900 truncate">
                                   {device.device_name}
                                 </h4>
@@ -483,19 +551,19 @@ const DeviceGroupsPage = () => {
                   Batal
                 </button>
                 <button
-                  onClick={handleCreateGroup}
+                  onClick={handleSubmitGroup}
                   disabled={loading || getTotalSelectedDevices() === 0}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Membuat...
+                      {isEditing ? 'Menyimpan...' : 'Membuat...'}
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-5 h-5" />
-                      Buat Grup ({getTotalSelectedDevices()})
+                      {isEditing ? `Simpan Grup (${getTotalSelectedDevices()})` : `Buat Grup (${getTotalSelectedDevices()})`}
                     </>
                   )}
                 </button>

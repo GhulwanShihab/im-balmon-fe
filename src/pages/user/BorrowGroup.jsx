@@ -22,6 +22,7 @@ const BorrowGroupPage = () => {
   const [loading, setLoading] = useState(false);
   const [groupDetail, setGroupDetail] = useState(null);
   const [employees, setEmployees] = useState([]);
+  const [pihak1Employees, setPihak1Employees] = useState([]);
   const [employeeLoading, setEmployeeLoading] = useState(false);
   const [formData, setFormData] = useState({
     borrower_name: '',
@@ -72,8 +73,14 @@ const BorrowGroupPage = () => {
   const fetchEmployees = async () => {
     try {
       setEmployeeLoading(true);
-      const response = await apiClient.get('/employees/');
-      setEmployees(response.data.employees || response.data || []);
+      const [allRes, pihak1Res] = await Promise.all([
+        apiClient.get('/employees/'),
+        apiClient.get('/employees/', { params: { pihak_1_only: true } })
+      ]);
+      const allEmps = allRes.data.employees || allRes.data || [];
+      const p1Emps = pihak1Res.data.employees || pihak1Res.data || [];
+      setEmployees(allEmps.filter(emp => emp.nip && emp.nip.trim() !== ''));
+      setPihak1Employees(p1Emps.filter(emp => emp.nip && emp.nip.trim() !== ''));
     } catch (error) {
       toast.error('Gagal memuat data pegawai');
     } finally {
@@ -106,8 +113,6 @@ const BorrowGroupPage = () => {
         assignment_letter_date: formData.assignment_letter_date,
         loan_start_date: formData.loan_start_date,
         usage_duration_days: parseInt(formData.usage_duration_days),
-        purpose: formData.purpose || null,
-        monitoring_devices: formData.monitoring_devices || null,
         pihak_1_id: parseInt(formData.pihak_1_id),
         pihak_2_id: parseInt(formData.pihak_2_id)
       };
@@ -306,7 +311,7 @@ const BorrowGroupPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="w-4 h-4 inline mr-1" />
-                Pihak 1 (Penanggung Jawab) *
+                Kuasa Izin Peminjam Barang *
               </label>
               <select
                 value={formData.pihak_1_id}
@@ -314,17 +319,22 @@ const BorrowGroupPage = () => {
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
                 required
               >
-                <option value="">Pilih Pegawai...</option>
+                <option value="">Pilih Kuasa Izin Peminjam Barang...</option>
                 {employeeLoading ? (
                   <option>Memuat data...</option>
                 ) : (
-                  employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.nama} ({emp.jabatan})
-                    </option>
-                  ))
+                  pihak1Employees
+                    .filter((emp) => String(emp.id) !== String(formData.pihak_2_id))
+                    .map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.nama} ({emp.jabatan})
+                      </option>
+                    ))
                 )}
               </select>
+              {pihak1Employees.length === 0 && !employeeLoading && (
+                <p className="text-xs text-amber-600 mt-1">⚠️ Belum ada pegawai yang ditandai sebagai Kuasa Izin Peminjam Barang. Hubungi admin.</p>
+              )}
             </div>
 
             <div>
@@ -342,40 +352,17 @@ const BorrowGroupPage = () => {
                 {employeeLoading ? (
                   <option>Memuat data...</option>
                 ) : (
-                  employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.nama} ({emp.jabatan})
-                    </option>
-                  ))
+                  employees
+                    .filter((emp) => String(emp.id) !== String(formData.pihak_1_id))
+                    .map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.nama} ({emp.jabatan})
+                      </option>
+                    ))
                 )}
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tujuan Peminjaman (Opsional)
-              </label>
-              <textarea
-                value={formData.purpose}
-                onChange={handleInputChange('purpose')}
-                rows="3"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all resize-none"
-                placeholder="Jelaskan tujuan peminjaman..."
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Perangkat Monitoring (Opsional)
-              </label>
-              <input
-                type="text"
-                value={formData.monitoring_devices}
-                onChange={handleInputChange('monitoring_devices')}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
-                placeholder="Contoh: GPS Logger, Data Logger"
-              />
-            </div>
           </div>
 
           {/* Warning */}

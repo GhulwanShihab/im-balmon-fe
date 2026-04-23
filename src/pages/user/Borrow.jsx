@@ -89,8 +89,10 @@ const BorrowPage = () => {
           apiClient.get('/employees/'),
           apiClient.get('/employees/', { params: { pihak_1_only: true } })
         ]);
-        setEmployees(allRes.data.employees || allRes.data || []);
-        setPihak1Employees(pihak1Res.data.employees || pihak1Res.data || []);
+        const allEmps = allRes.data.employees || allRes.data || [];
+        const p1Emps = pihak1Res.data.employees || pihak1Res.data || [];
+        setEmployees(allEmps.filter(emp => emp.nip && emp.nip.trim() !== ''));
+        setPihak1Employees(p1Emps.filter(emp => emp.nip && emp.nip.trim() !== ''));
       } catch (error) {
       } finally {
         setEmployeeLoading(false);

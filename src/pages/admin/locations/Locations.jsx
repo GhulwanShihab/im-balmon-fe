@@ -235,10 +235,17 @@ const Locations = () => {
                             ) : (
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                 {devicesByLocation[loc.id].map(dev => (
-                                  <div key={dev.id} className="flex items-center space-x-2 bg-white rounded-lg border border-gray-200 px-3 py-2">
+                                  <div key={dev.is_child ? `child-${dev.id}` : `parent-${dev.id}`} className="flex items-center space-x-2 bg-white rounded-lg border border-gray-200 px-3 py-2">
                                     <Smartphone className="w-4 h-4 text-gray-400 shrink-0" />
                                     <div className="min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 truncate">{dev.device_name || dev.device_code}</p>
+                                      <p className="text-sm font-medium text-gray-900 truncate flex items-center gap-2">
+                                        {dev.device_name || dev.device_code}
+                                        {dev.is_child && (
+                                          <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                            CHILD
+                                          </span>
+                                        )}
+                                      </p>
                                       <div className="flex items-center space-x-2">
                                         <span className="text-xs text-gray-500">{dev.device_code}</span>
                                         {dev.device_condition && (

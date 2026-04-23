@@ -38,9 +38,8 @@ const EditEmployee = () => {
       newErrors.nama = 'Nama minimal 3 karakter';
     }
 
-    if (!form.nip.trim()) {
-      newErrors.nip = 'NIP wajib diisi';
-    } else if (!/^\d+$/.test(form.nip)) {
+    const nipVal = (form.nip || '').trim();
+    if (nipVal && !/^\d+$/.test(nipVal)) {
       newErrors.nip = 'NIP hanya boleh berisi angka';
     }
 
@@ -66,7 +65,7 @@ const EditEmployee = () => {
       setLoading(true);
       await apiClient.put(`/employees/${id}`, {
         nama: form.nama.trim(),
-        nip: form.nip.trim(),
+        nip: (form.nip || '').trim() || null,
         jabatan: form.jabatan.trim(),
         is_pihak_1: form.is_pihak_1,
       });
@@ -176,7 +175,7 @@ const EditEmployee = () => {
             {/* NIP Field */}
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                NIP <span className="text-red-500">*</span>
+                NIP <span className="text-gray-400 font-normal text-xs ml-1">(Opsional)</span>
               </label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2">

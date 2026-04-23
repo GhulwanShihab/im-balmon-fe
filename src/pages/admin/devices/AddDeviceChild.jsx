@@ -108,9 +108,14 @@ const AddDeviceChild = () => {
     }
   };
 
-  const filteredDevices = devices.filter((d) =>
-    d.device_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDevices = devices.filter((d) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      d.device_name?.toLowerCase().includes(term) ||
+      d.device_code?.toLowerCase().includes(term) ||
+      d.nup_device?.toString().toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -162,7 +167,7 @@ const AddDeviceChild = () => {
               <option value="">Pilih perangkat utama</option>
               {filteredDevices.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.device_name} ({d.device_code})
+                  {d.device_name} — Kode: {d.device_code} | NUP: {d.nup_device || '-'}
                 </option>
               ))}
             </select>

@@ -270,12 +270,6 @@ const LoginPage = () => {
                 )}
               </button>
             </form>
-
-            {/* Info keamanan */}
-            <div className="mt-6 flex items-center justify-center space-x-2 text-gray-500">
-              <Shield className="w-4 h-4" />
-              <span className="text-xs">Diamankan dengan enkripsi</span>
-            </div>
           </div>
 
           {/* Link Registrasi */}

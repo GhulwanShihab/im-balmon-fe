@@ -314,7 +314,7 @@ const ManagerUsers = () => {
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="">Semua Role</option>
-              {roles.map((role) => (
+              {roles.filter(r => r.name !== 'superadmin').map((role) => (
                 <option key={role.id} value={role.id}>
                   {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
                 </option>
