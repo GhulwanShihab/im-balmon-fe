@@ -193,51 +193,86 @@ const BorrowPage = () => {
   };
 
   const handleQRScanSuccess = async (decodedText) => {
-  try {
-    // Trim whitespace dari hasil scan kamera
-    let deviceCode = decodedText.trim();
-    
-    
     try {
-      const parsed = JSON.parse(decodedText);
-      if (parsed.device_code) {
-        deviceCode = parsed.device_code.trim();
+      let deviceCode = decodedText.trim();
+      let nupDevice = null;
+      let qrDeviceId = null;
+      
+      try {
+        const parsed = JSON.parse(decodedText);
+        if (parsed.device_code) {
+          deviceCode = parsed.device_code.trim();
+        }
+        if (parsed.nup_device) {
+          nupDevice = parsed.nup_device.trim();
+        }
+        if (parsed.device_id) {
+          qrDeviceId = parsed.device_id;
+        }
+      } catch {
+        // kalau bukan JSON, biarkan tetap pakai decodedText langsung
       }
-    } catch {
-      // kalau bukan JSON, biarkan tetap pakai decodedText langsung
+
+      // 1. Cari di availableDevices (agar bisa menemukan child device)
+      let foundDevice = null;
+      for (const parent of availableDevices) {
+        // Cek parent
+        if (
+          (qrDeviceId && parent.id === qrDeviceId && !nupDevice && !parent.nup_device) || 
+          (!qrDeviceId && parent.device_code === deviceCode && (!nupDevice || !parent.nup_device))
+        ) {
+          foundDevice = parent;
+          break;
+        }
+        
+        // Cek children
+        if (parent.children && parent.children.length > 0) {
+          for (const child of parent.children) {
+            if (
+              (qrDeviceId && child.id === qrDeviceId && (child.nup_device || '') === (nupDevice || '')) ||
+              (!qrDeviceId && child.device_code === deviceCode && (child.nup_device || '') === (nupDevice || ''))
+            ) {
+              foundDevice = { ...child, parent_id: parent.id };
+              break;
+            }
+          }
+        }
+        if (foundDevice) break;
+      }
+
+      let device = foundDevice;
+
+      // 2. Jika tidak ditemukan, fallback ke API backend
+      if (!device) {
+        const response = await apiClient.get(`/devices/code/${encodeURIComponent(deviceCode)}`);
+        device = response.data;
+      }
+
+      // Case-insensitive comparison untuk status
+      const status = (device.device_status || '').toUpperCase();
+      if (status !== 'TERSEDIA') {
+        toast.error(`Perangkat tidak tersedia untuk dipinjam (status: ${device.device_status})`);
+        return;
+      }
+
+      const deviceKey = getDeviceKey(device);
+      if (selectedDevices.some(d => getDeviceKey(d) === deviceKey)) {
+        toast.error('Perangkat sudah dipilih');
+        return;
+      }
+
+      setSelectedDevices(prev => [...prev, { ...device, __key: deviceKey }]);
+      toast.success(`Perangkat ${device.device_name} berhasil ditambahkan`);
+    } catch (error) {
+      if (error.response?.status === 404) {
+        toast.error(`Perangkat dengan kode "${deviceCode}" tidak ditemukan`);
+      } else if (error.response?.status === 401 || error.response?.status === 403) {
+        toast.error('Anda tidak memiliki akses untuk melihat perangkat');
+      } else {
+        toast.error(error.response?.data?.detail || 'Gagal memproses QR code');
+      }
     }
-
-
-    const response = await apiClient.get(`/devices/code/${encodeURIComponent(deviceCode)}`);
-    const device = response.data;
-    
-
-    // Case-insensitive comparison untuk status
-    const status = (device.device_status || '').toUpperCase();
-    if (status !== 'TERSEDIA') {
-      toast.error(`Perangkat tidak tersedia untuk dipinjam (status: ${device.device_status})`);
-      return;
-    }
-
-    if (selectedDevices.some(d => getDeviceKey(d) === getDeviceKey(device))) {
-      toast.error('Perangkat sudah dipilih');
-      return;
-    }
-
-    setSelectedDevices(prev => [...prev, device]);
-    toast.success(`Perangkat ${device.device_name} berhasil ditambahkan`);
-  } catch (error) {
-    
-    // Tampilkan pesan error yang lebih spesifik
-    if (error.response?.status === 404) {
-      toast.error(`Perangkat dengan kode "${deviceCode}" tidak ditemukan`);
-    } else if (error.response?.status === 401 || error.response?.status === 403) {
-      toast.error('Anda tidak memiliki akses untuk melihat perangkat');
-    } else {
-      toast.error(error.response?.data?.detail || 'Gagal memproses QR code');
-    }
-  }
-};
+  };
 
 
 
@@ -288,12 +323,16 @@ const BorrowPage = () => {
         monitoring_devices: formData.monitoring_devices || null,
         pihak_1_id: formData.pihak_1_id,
         pihak_2_id: formData.pihak_2_id, 
-        loan_items: selectedDevices.map(device => ({
-          device_id: device.id,
-          quantity: 1,
-          condition_before: "BAIK",
-          condition_notes: null
-        }))
+        loan_items: selectedDevices.map(device => {
+          const isChild = !!device.parent_id || device.is_child === true;
+          return {
+            device_id: isChild ? null : device.id,
+            child_device_id: isChild ? device.id : null,
+            quantity: 1,
+            condition_before: "BAIK",
+            condition_notes: null
+          };
+        })
       };
 
       const response = await apiClient.post('/loans/', loanData);
@@ -327,7 +366,8 @@ const BorrowPage = () => {
   };
 
   const getDeviceKey = (device) => {
-    return device.id + "_" + (device.device_code || "code");
+    const isChild = !!device.parent_id || device.is_child === true;
+    return (isChild ? "child_" : "parent_") + device.id + "_" + (device.device_code || "code") + "_" + (device.nup_device || "");
   };
 
   const getStatusBadge = (status) => {
@@ -592,7 +632,7 @@ const BorrowPage = () => {
                                   {getStatusBadge(childStatus)}
                                   {childStatus === "TERSEDIA" && (
                                     <button
-                                      onClick={() => handleManualDeviceSelect(child)}
+                                      onClick={() => handleManualDeviceSelect({ ...child, parent_id: device.id })}
                                       disabled={isSelected}
                                       className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-1 px-3 rounded-lg text-xs"
                                     >

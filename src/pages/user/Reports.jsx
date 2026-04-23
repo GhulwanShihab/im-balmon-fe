@@ -321,7 +321,7 @@ const ReportsPage = () => {
               <div className="bg-gray-50 p-4 rounded-xl space-y-3">
                 {selectedLoan.loan_items && selectedLoan.loan_items.length > 0 ? (
                   selectedLoan.loan_items.map((item, index) => {
-                    const deviceInfo = item.child_device || item.device;
+                    const deviceInfo = item.child || item.device;
                     return (
                       <div key={index} className="bg-white p-3 rounded-lg border border-gray-200">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -459,7 +459,7 @@ const ReportsPage = () => {
                 </h3>
                 <div className="bg-green-50 p-4 rounded-xl space-y-3">
                   {selectedLoan.loan_items.map((item, index) => {
-                    const deviceInfo = item.child_device || item.device;
+                    const deviceInfo = item.child || item.device;
                     if (!item.condition_after) return null;
                     
                     return (
@@ -717,7 +717,7 @@ const ReportsPage = () => {
                         <div className="space-y-1">
                           {loan.loan_items.slice(0, 2).map((item, idx) => (
                             <div key={idx} className="text-xs">
-                              {item.child_device?.device_name || item.device?.device_name || '-'}
+                              {item.child?.device_name || item.device?.device_name || '-'}
                             </div>
                           ))}
                           {loan.loan_items.length > 2 && (
