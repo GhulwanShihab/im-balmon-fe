@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   QrCode, 
@@ -567,26 +567,31 @@ const BorrowPage = () => {
                           </button>
                         )}
 
-                        {/* Device Image */}
-                        <DeviceImage 
-                          photos={device.photos_url} 
-                          name={device.device_name} 
-                          size="sm" 
-                        />
-
-                        {/* Device Info */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 text-sm truncate">
-                            {device.device_name}
-                          </h3>
-                          <p className="text-xs text-gray-500 truncate">
-                            {device.device_code} • {device.nup_device}
-                          </p>
-                          {!hasChildren && device.device_type && (
-                            <p className="text-xs text-gray-400 italic truncate">
-                              {device.device_type}
-                            </p>
-                          )}
+                        {/* Scrollable Area (Image + Info) */}
+                        <div className="flex-1 min-w-0 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                          <div className="flex items-center gap-3 w-max pr-4">
+                            {/* Device Image */}
+                            <DeviceImage 
+                              photos={device.photos_url} 
+                              name={device.device_name} 
+                              size="sm" 
+                            />
+                            
+                            {/* Device Info */}
+                            <div>
+                              <h3 className="font-semibold text-gray-900 text-sm whitespace-nowrap">
+                                {device.device_name}
+                              </h3>
+                              <p className="text-xs text-gray-500 whitespace-nowrap mt-0.5">
+                                {device.device_code} • {device.nup_device}
+                              </p>
+                              {!hasChildren && device.device_type && (
+                                <p className="text-xs text-gray-400 italic whitespace-nowrap mt-0.5">
+                                  {device.device_type}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                           
                         {/* Jika tidak punya anak, tampilkan status + tombol */}
@@ -619,13 +624,15 @@ const BorrowPage = () => {
                                 key={child.id}
                                 className="flex items-center justify-between py-2 border-b last:border-none"
                               >
-                                <div>
-                                  <h4 className="text-sm font-medium text-gray-800">
-                                    {child.device_name}
-                                  </h4>
-                                  <p className="text-xs text-gray-500">
-                                    {child.device_code} • {child.nup_device}
-                                  </p>
+                                <div className="flex-1 min-w-0 pr-3 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                  <div className="w-max pr-4">
+                                    <h4 className="text-sm font-medium text-gray-800 whitespace-nowrap">
+                                      {child.device_name}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 whitespace-nowrap mt-0.5">
+                                      {child.device_code} • {child.nup_device}
+                                    </p>
+                                  </div>
                                 </div>
                             
                                 <div className="flex items-center gap-2">
@@ -662,17 +669,22 @@ const BorrowPage = () => {
               <div className="space-y-3">
                 {selectedDevices.map((device) => (
                   <div key={device.id} className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
-                    {/* Device Image */}
-                    <DeviceImage 
-                      photos={device.photos_url} 
-                      name={device.device_name} 
-                      size="xs" 
-                    />
-                    
-                    {/* Device Info */}
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{device.device_name}</h3>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">{device.device_code}</p>
+                    {/* Scrollable Area (Image + Info) */}
+                    <div className="min-w-0 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <div className="flex items-center gap-3 w-max pr-4">
+                        {/* Device Image */}
+                        <DeviceImage 
+                          photos={device.photos_url} 
+                          name={device.device_name} 
+                          size="xs" 
+                        />
+                        
+                        {/* Device Info */}
+                        <div>
+                          <h3 className="font-medium text-gray-900 text-sm sm:text-base whitespace-nowrap">{device.device_name}</h3>
+                          <p className="text-xs sm:text-sm text-gray-500 whitespace-nowrap mt-0.5">{device.device_code}</p>
+                        </div>
+                      </div>
                     </div>
                     <button
                       onClick={() => removeSelectedDevice(device.__key)}
