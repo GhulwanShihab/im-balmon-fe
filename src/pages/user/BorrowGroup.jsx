@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   CheckCircle,
@@ -228,7 +228,7 @@ const BorrowGroupPage = () => {
                 value={formData.borrower_name}
                 readOnly
                 className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-700 cursor-not-allowed"
-                placeholder="Nama terisi otomatis"
+                placeholder="Nama terisi otomatis (Sistem)"
               />
             </div>
 

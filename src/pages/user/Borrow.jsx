@@ -733,7 +733,7 @@ const BorrowPage = () => {
                 value={formData.borrower_name}
                 readOnly
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm sm:text-base text-gray-700 cursor-not-allowed"
-                placeholder="Nama terisi otomatis"
+                placeholder="Nama terisi otomatis (Sistem)"
               />
             </div>
 
